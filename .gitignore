@@ -2,3 +2,13 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Scratch / generated images (not source controlled)
+example_annotated.png
+example_field.png
