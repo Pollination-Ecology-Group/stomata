@@ -1,0 +1,170 @@
+[
+  {
+    "objectID": "measurements.html",
+    "href": "measurements.html",
+    "title": "Measurements",
+    "section": "",
+    "text": "Stomata are microscopic pores on leaf surfaces, each flanked by a pair of guard cells. Their geometry is a key indicator of plant physiology: stomatal size and aperture regulate gas exchange (CO₂/O₂) and water loss (transpiration). Accurate morphometric measurements allow researchers to:\n\nCompare stomatal morphology across genotypes, species, or treatments\nQuantify stress responses (drought, heat) through pore aperture changes\nEstimate stomatal conductance from geometric proxies"
+  },
+  {
+    "objectID": "measurements.html#biological-background",
+    "href": "measurements.html#biological-background",
+    "title": "Measurements",
+    "section": "",
+    "text": "Stomata are microscopic pores on leaf surfaces, each flanked by a pair of guard cells. Their geometry is a key indicator of plant physiology: stomatal size and aperture regulate gas exchange (CO₂/O₂) and water loss (transpiration). Accurate morphometric measurements allow researchers to:\n\nCompare stomatal morphology across genotypes, species, or treatments\nQuantify stress responses (drought, heat) through pore aperture changes\nEstimate stomatal conductance from geometric proxies"
+  },
+  {
+    "objectID": "measurements.html#annotated-diagram",
+    "href": "measurements.html#annotated-diagram",
+    "title": "Measurements",
+    "section": "Annotated Diagram",
+    "text": "Annotated Diagram\nThe figure below shows a single stoma from a real brightfield microscopy image (training dataset), with the YOLO segmentation polygons and all four measurement lines overlaid. The green outline is the stoma body mask (class 1); the cyan outline is the pore/aperture mask (class 0):\n\n\n\nReal brightfield microscopy image of a stoma with PSCA’s four measurement dimensions annotated. Yellow = major axis; orange = minor axis (full stoma width); blue = pore width; magenta = guard cell thickness (one side)."
+  },
+  {
+    "objectID": "measurements.html#trait-definitions",
+    "href": "measurements.html#trait-definitions",
+    "title": "Measurements",
+    "section": "Trait Definitions",
+    "text": "Trait Definitions\nPSCA reports every measurement in both pixels and micrometres (µm). Pixel-to-micrometre conversion uses the calibration constant:\n\\[\n\\text{PX\\_TO\\_UM} = \\frac{50.0\\,\\mu\\text{m}}{451.3958\\,\\text{px}} \\approx 0.1108\\,\\mu\\text{m/px}\n\\]\n\n\n\n\n\n\nNote\n\n\n\nThis calibration is specific to the microscope/objective used by the Pollination Ecology Group. If you change optics, update PX_TO_UM in src/extract_traits.py.\n\n\n\n\n1. Major Axis Length (major_axis_len_um)\n\n\n📏 Major Axis — Full Stoma Length\n\n\nThe longest dimension of the minimum-area bounding rectangle fitted around the stoma mask. This corresponds to the longitudinal axis of the stoma, typically oriented parallel to the epidermal cell rows.\n\n\nstoma_major_length_px = max(rect_width, rect_height) → × PX_TO_UM\n\n\nHow it is computed: cv2.minAreaRect() fits the tightest possible rotated rectangle around the stoma polygon. The longer of the two rectangle sides is taken as the major axis.\nBiological meaning: Reflects overall stoma size. Larger stomata are associated with polyploidy, shade adaptation, and certain stress responses.\n\n\n\n2. Minor Axis Length (minor_axis_len_um)\n\n\n📏 Minor Axis — Full Stoma Width\n\n\nThe length of the minor axis line (perpendicular to the major axis) where it intersects the full stoma outline. Measured by projecting the minor-axis direction through the stoma polygon.\n\n\nstoma_minor_length_px = minor_axis_line ∩ stoma_polygon → length → × PX_TO_UM\n\n\nHow it is computed:\n\nThe minor axis direction is extracted from the bounding rectangle angle.\nAn infinitely long line is cast through the stoma centroid along that direction.\nThe intersection of this line with the stoma polygon gives the chord length = minor axis.\n\nBiological meaning: Width of the closed stoma. Together with the major axis, this gives a shape index (eccentricity / aspect ratio).\n\n\n\n3. Pore Minor Length (pore_minor_len_um)\n\n\n🔵 Pore Width — Aperture Diameter\n\n\nThe width of the central pore (aperture) measured along the same minor axis direction as above. PSCA detects the pore as a separate segmentation class and intersects it with the same minor axis line.\n\n\ncenter_minor_length_px = minor_axis_line ∩ pore_polygon → length → × PX_TO_UM\n\n\nHow it is computed: The model segments the pore as class 0 (center) and the full stoma as class 1. The pore polygon is intersected with the same minor axis line used for the stoma.\nBiological meaning: The most ecophysiologically important trait — directly proportional to stomatal conductance (g_s). A wider pore = higher gas exchange and transpiration.\n\n\n\n4. Guard Cell Width (guard_cell_width_um)\n\n\n🟢 Guard Cell Width — Thickness of One Guard Cell\n\n\nEstimated as half the difference between the stoma width and the pore width along the minor axis. Represents the radial thickness of a single guard cell.\n\n\nguard_cell_width_px = (stoma_minor_length_px − pore_minor_length_px) / 2 → × PX_TO_UM\n\n\nHow it is computed: Since the minor axis passes through both guard cells symmetrically, the stoma width = pore width + 2 × guard cell width.\nBiological meaning: Guard cell thickness correlates with turgor potential and mechanical properties of the cell wall. Thicker guard cells tend to open with less turgor."
+  },
+  {
+    "objectID": "measurements.html#output-csv-schema",
+    "href": "measurements.html#output-csv-schema",
+    "title": "Measurements",
+    "section": "Output CSV Schema",
+    "text": "Output CSV Schema\nEach row in the output CSV represents one detected stoma from one image:\n\nOutput CSV column schema\n\n\n\n\n\n\n\n\nColumn\nType\nUnit\nDescription\n\n\n\n\nimage_name\nstring\n—\nSource image filename\n\n\ns3_key\nstring\n—\nFull S3 object path\n\n\nstoma_idx\nint\n—\nIndex of stoma within image\n\n\nmajor_axis_len_px\nfloat\npx\nMajor axis in pixels\n\n\nmajor_axis_len_um\nfloat\nµm\nMajor axis in micrometres\n\n\nminor_axis_len_px\nfloat\npx\nMinor axis (stoma) in pixels\n\n\nminor_axis_len_um\nfloat\nµm\nMinor axis (stoma) in micrometres\n\n\npore_minor_len_px\nfloat\npx\nPore width in pixels\n\n\npore_minor_len_um\nfloat\nµm\nPore width in micrometres\n\n\nguard_cell_width_px\nfloat\npx\nGuard cell width in pixels\n\n\nguard_cell_width_um\nfloat\nµm\nGuard cell width in micrometres"
+  },
+  {
+    "objectID": "measurements.html#example-output-rows",
+    "href": "measurements.html#example-output-rows",
+    "title": "Measurements",
+    "section": "Example Output Rows",
+    "text": "Example Output Rows\nimage_name,stoma_idx,major_axis_len_px,major_axis_len_um,minor_axis_len_px,minor_axis_len_um,pore_minor_len_px,pore_minor_len_um,guard_cell_width_px,guard_cell_width_um\nleaf_01_tile_003.jpg,0,312.4,34.63,198.7,22.02,87.3,9.68,55.7,6.17\nleaf_01_tile_003.jpg,1,305.1,33.82,191.2,21.19,74.1,8.21,58.6,6.49\nleaf_01_tile_007.jpg,0,289.6,32.10,183.5,20.34,65.8,7.30,58.9,6.52\n\n\n\n\n\n\nTipDownstream analysis\n\n\n\nLoad this CSV directly in R with read.csv() or in Python with pd.read_csv(). The _um columns are ready for statistical modelling without further conversion."
+  },
+  {
+    "objectID": "measurements.html#detection-logic-stoma-pore-matching",
+    "href": "measurements.html#detection-logic-stoma-pore-matching",
+    "title": "Measurements",
+    "section": "Detection Logic — Stoma ↔︎ Pore Matching",
+    "text": "Detection Logic — Stoma ↔︎ Pore Matching\nBecause the model segments stoma bodies and pores as separate objects, PSCA needs to pair them:\n# Primary: pore centroid must fall inside the stoma polygon\nfor center in centers:\n    if stoma.contains(center.centroid):\n        matched_center = center\n        break\n\n# Fallback: nearest pore within 100 px\nif not matched_center and centers:\n    distances = [stoma.centroid.distance(c.centroid) for c in centers]\n    if min(distances) &lt; 100:\n        matched_center = centers[np.argmin(distances)]\nOnly stomata with a matched pore contribute a row to the CSV. Stomata where no pore was detected are silently skipped."
+  },
+  {
+    "objectID": "pipeline.html",
+    "href": "pipeline.html",
+    "title": "Inference Pipeline",
+    "section": "",
+    "text": "PSCA is a containerised batch pipeline that:\n\nDownloads images from CESNET S3 storage\nRuns YOLOv11 instance segmentation on each image\nExtracts geometric traits from the segmentation masks\nSaves results to a CSV and uploads it back to S3\n\nThe pipeline runs as a Kubernetes Job — no local GPU required."
+  },
+  {
+    "objectID": "pipeline.html#overview",
+    "href": "pipeline.html#overview",
+    "title": "Inference Pipeline",
+    "section": "",
+    "text": "PSCA is a containerised batch pipeline that:\n\nDownloads images from CESNET S3 storage\nRuns YOLOv11 instance segmentation on each image\nExtracts geometric traits from the segmentation masks\nSaves results to a CSV and uploads it back to S3\n\nThe pipeline runs as a Kubernetes Job — no local GPU required."
+  },
+  {
+    "objectID": "pipeline.html#architecture",
+    "href": "pipeline.html#architecture",
+    "title": "Inference Pipeline",
+    "section": "Architecture",
+    "text": "Architecture\n\n\n\n\n\nflowchart LR\n    S3[(CESNET S3\\nBucket)] --&gt;|\"download images\\n(16 parallel workers)\"| Fetch\n    S3 --&gt;|\"download model\\nbest.pt\"| Model\n    Model[\"YOLOv11\\nSegmentation Model\"] --&gt; Infer\n    Fetch[\"Image Fetcher\\n(ThreadPoolExecutor)\"] --&gt; Infer\n    Infer[\"YOLO Inference\\n(GPU/CPU)\"] --&gt; Mask\n    Mask[\"Mask Post-processing\\nextract_traits.py\"] --&gt; CSV\n    CSV[\"stomata_traits.csv\"] --&gt;|\"upload results\"| S3\n    \n    style S3 fill:#2d6a4f,color:#fff\n    style Model fill:#1a7a6e,color:#fff\n    style CSV fill:#4caf82,color:#fff"
+  },
+  {
+    "objectID": "pipeline.html#step-by-step",
+    "href": "pipeline.html#step-by-step",
+    "title": "Inference Pipeline",
+    "section": "Step-by-Step",
+    "text": "Step-by-Step\n\nStep 1 — Model Download\nIf the model is not already cached at MODEL_PATH (/tmp/best.pt by default), it is downloaded from S3 at startup:\nif S3_MODEL_KEY and not os.path.exists(MODEL_PATH):\n    s3.download_file(S3_BUCKET, S3_MODEL_KEY, MODEL_PATH)\nThe model key is configured via the S3_MODEL_KEY environment variable.\n\n\n\nStep 2 — Image Discovery\nThe S3 bucket is paginated to find all .jpg / .jpeg / .png files under the configured prefix:\npaginator = s3.get_paginator('list_objects_v2')\npages = paginator.paginate(Bucket=S3_BUCKET, Prefix=TILE_PREFIX)\nDefault prefix: Ostatni/Stomata/extracted/\n\n\n\nStep 3 — Parallel Download + Inference\nImages are processed in batches of 100 to limit memory usage. Within each batch, images are downloaded concurrently using a 16-worker thread pool:\nwith concurrent.futures.ThreadPoolExecutor(max_workers=FETCH_WORKERS) as executor:\n    futures = [executor.submit(download_image, s3, key) for key in batch_keys]\n    for future in concurrent.futures.as_completed(futures):\n        key, img = future.result()\n        if img is not None:\n            res = process_image(model, img, image_name)\n\n\n\n\n\n\nNote\n\n\n\nYOLO inference itself runs sequentially on the GPU. Only image downloading is parallelised — this hides S3 network latency behind GPU compute time.\n\n\n\n\n\nStep 4 — Trait Extraction\nFor each image, process_image() in extract_traits.py:\n\nRuns YOLO inference → gets segmentation masks + class labels\nSeparates masks into stoma (class 1) and pore (class 0) lists\nFor each stoma, finds the matching pore (containment check → nearest-neighbour fallback)\nComputes the minor axis via cv2.minAreaRect() and shapely intersection\nReturns a list of measurement dicts\n\nSee the Measurements page for full trait definitions.\n\n\n\nStep 5 — Output & Upload\nResults are collected into a pandas DataFrame, saved to a local CSV, then uploaded to S3:\nS3_OUTPUT_KEY = \"Ostatni/Stomata/stomata_traits.csv\"\nIntermediate saves happen every 1000 images to guard against job interruption."
+  },
+  {
+    "objectID": "pipeline.html#environment-variables",
+    "href": "pipeline.html#environment-variables",
+    "title": "Inference Pipeline",
+    "section": "Environment Variables",
+    "text": "Environment Variables\nAll runtime configuration is via environment variables (set in the Kubernetes Job spec):\n\nEnvironment variable reference\n\n\n\n\n\n\n\nVariable\nDefault\nDescription\n\n\n\n\nS3_ENDPOINT\nhttps://s3.cl4.du.cesnet.cz\nS3-compatible endpoint URL\n\n\nS3_BUCKET\nbucket\nBucket name\n\n\nTILE_PREFIX\nOstatni/Stomata/extracted/\nS3 prefix for input images\n\n\nMODEL_PATH\n/tmp/best.pt\nLocal path to cache the model\n\n\nS3_MODEL_KEY\n(required)\nS3 key of the model weights\n\n\nFETCH_WORKERS\n16\nNumber of parallel download threads\n\n\nOUTPUT_CSV\n/tmp/stomata_traits.csv\nLocal path for CSV output\n\n\nS3_OUTPUT_KEY\nOstatni/Stomata/stomata_traits.csv\nS3 key to upload results to\n\n\nAWS_ACCESS_KEY_ID\n(required)\nS3 access key\n\n\nAWS_SECRET_ACCESS_KEY\n(required)\nS3 secret key"
+  },
+  {
+    "objectID": "pipeline.html#kubernetes-deployment",
+    "href": "pipeline.html#kubernetes-deployment",
+    "title": "Inference Pipeline",
+    "section": "Kubernetes Deployment",
+    "text": "Kubernetes Deployment\n\nDeploy full inference job\n./deploy_infer.sh\n\n\nDeploy test job (single-image sanity check)\n./deploy_test.sh\nBoth scripts build the Docker image, push it to the registry, and apply the corresponding YAML manifest in k8s/."
+  },
+  {
+    "objectID": "pipeline.html#source-files",
+    "href": "pipeline.html#source-files",
+    "title": "Inference Pipeline",
+    "section": "Source Files",
+    "text": "Source Files\n\n\n\nFile\nPurpose\n\n\n\n\nsrc/extract_traits.py\nCore measurement logic — process_image(), get_minor_axis_line()\n\n\nsrc/run_inference_s3.py\nS3-aware batch runner\n\n\nk8s/stomata-infer-job.yaml\nKubernetes Job manifest (full run)\n\n\nk8s/stomata-test-job.yaml\nKubernetes Job manifest (test run)"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Plant Stomata Counter-Analyser",
+    "section": "",
+    "text": "Deep-learning powered pipeline for automated stomata detection, segmentation and quantitative morphometric analysis from brightfield microscopy images."
+  },
+  {
+    "objectID": "index.html#what-is-psca",
+    "href": "index.html#what-is-psca",
+    "title": "Plant Stomata Counter-Analyser",
+    "section": "What is PSCA?",
+    "text": "What is PSCA?\nThe Plant Stomata Counter-Analyser (PSCA) is an end-to-end automated pipeline developed by the Pollination Ecology Group to replace manual stomata counting in microscopy images. It combines a fine-tuned YOLOv11 instance segmentation model with geometric post-processing to extract biologically meaningful traits at scale.\n\n\n\n\n\n\nTipQuick Start\n\n\n\nJump to the Measurements page to understand what gets measured and why, or visit the Pipeline page to see how the system works end-to-end."
+  },
+  {
+    "objectID": "index.html#key-features",
+    "href": "index.html#key-features",
+    "title": "Plant Stomata Counter-Analyser",
+    "section": "Key Features",
+    "text": "Key Features\n\n\n\n\n\n\n\nFeature\nDescription\n\n\n\n\n🔬 Instance segmentation\nDetects each individual stoma and its pore separately\n\n\n📐 Geometric trait extraction\n4 morphometric measurements per stoma in both pixels and µm\n\n\n☁️ Cloud-native\nReads images from and writes results to CESNET S3\n\n\n⚡ High-throughput\nParallel image download with multi-worker thread pool\n\n\n🐳 Containerised\nRuns as a Kubernetes Job — no local GPU required\n\n\n📊 CSV output\nOne row per stoma, ready for R/Python downstream analysis"
+  },
+  {
+    "objectID": "index.html#measured-traits-at-a-glance",
+    "href": "index.html#measured-traits-at-a-glance",
+    "title": "Plant Stomata Counter-Analyser",
+    "section": "Measured Traits at a Glance",
+    "text": "Measured Traits at a Glance\nEach detected stoma produces four geometric measurements:\nmajor_axis_len_um   — Full length of the stoma (µm)\nminor_axis_len_um   — Full width of the stoma (µm)\npore_minor_len_um   — Width of the central pore opening (µm)\nguard_cell_width_um — Thickness of a single guard cell (µm)\nSee the Measurements page for a fully annotated diagram and trait definitions."
+  },
+  {
+    "objectID": "index.html#repository-structure",
+    "href": "index.html#repository-structure",
+    "title": "Plant Stomata Counter-Analyser",
+    "section": "Repository Structure",
+    "text": "Repository Structure\nStomata/\n├── src/\n│   ├── extract_traits.py   # Geometric measurement logic\n│   └── run_inference_s3.py # S3-aware batch inference runner\n├── k8s/\n│   ├── stomata-infer-job.yaml  # Kubernetes batch inference job\n│   └── stomata-test-job.yaml   # Kubernetes test job\n├── deploy_infer.sh             # Deploy inference to K8s\n├── deploy_test.sh              # Deploy test run to K8s\n└── index.qmd                   # This documentation site"
+  },
+  {
+    "objectID": "cloud_setup.html",
+    "href": "cloud_setup.html",
+    "title": "Cloud Storage Setup",
+    "section": "",
+    "text": "ImportantCredentials\n\n\n\nAsk the Project Lead for the team access_key_id and secret_access_key before starting. Do not share them via Slack or email — use a secure channel.\nGoal: Mount the team’s CESNET S3 bucket as a local folder so you can drag-and-drop microscopy images and retrieve results without a browser."
+  },
+  {
+    "objectID": "cloud_setup.html#step-0-install-prerequisites",
+    "href": "cloud_setup.html#step-0-install-prerequisites",
+    "title": "Cloud Storage Setup",
+    "section": "Step 0 — Install Prerequisites",
+    "text": "Step 0 — Install Prerequisites\nYou need Rclone (the connector) and a FUSE driver (so Rclone can present the bucket as a folder).\n\n🐧 Linux🪟 Windows🍎 macOS\n\n\nsudo apt install rclone fuse3\n\n\n\nDownload Rclone for Windows, unzip, place rclone.exe in e.g. C:\\rclone\\, add to PATH.\nDownload and install WinFsp — required for mounting.\n\n\n\nbrew install rclone\nThen download and install macFUSE.\n\nNote (Apple Silicon): You may need to allow kernel extensions in Recovery Mode for macFUSE. Check if fuse-t works as an alternative on M1/M2/M3."
+  },
+  {
+    "objectID": "cloud_setup.html#step-1-configure-the-connection",
+    "href": "cloud_setup.html#step-1-configure-the-connection",
+    "title": "Cloud Storage Setup",
+    "section": "Step 1 — Configure the Connection",
+    "text": "Step 1 — Configure the Connection\nRun the interactive wizard (same on all platforms):\nrclone config\nAnswer the prompts as follows:\n\nRclone configuration values\n\n\nPrompt\nValue\n\n\n\n\nNew remote?\nn\n\n\nName\ncesnet_s3\n\n\nStorage type\nAmazon S3 Compliant Storage\n\n\nProvider\nCeph\n\n\nenv_auth\nfalse\n\n\naccess_key_id\n(Team Access Key)\n\n\nsecret_access_key\n(Team Secret Key)\n\n\nendpoint\nhttps://s3.cl4.du.cesnet.cz\n\n\nacl\nprivate\n\n\nSave\ny"
+  },
+  {
+    "objectID": "cloud_setup.html#step-2-mount-the-drive",
+    "href": "cloud_setup.html#step-2-mount-the-drive",
+    "title": "Cloud Storage Setup",
+    "section": "Step 2 — Mount the Drive",
+    "text": "Step 2 — Mount the Drive\n\n🐧 Linux🪟 Windows🍎 macOS\n\n\nOne-time:\nmkdir ~/cesnet_cloud\nrclone mount cesnet_s3: ~/cesnet_cloud --vfs-cache-mode writes --daemon\nAuto-start on login — open Startup Applications, click Add, and use this command:\nrclone mount cesnet_s3: /home/YOUR_USER/cesnet_cloud --vfs-cache-mode writes --daemon\n\n\nOne-time (PowerShell):\nmkdir C:\\cesnet_cloud\nrclone mount cesnet_s3: C:\\cesnet_cloud --vfs-cache-mode writes\n\nKeep this terminal open — closing it disconnects the drive.\n\nAuto-start: Create mount_cesnet.bat with:\n@echo off\nstart /b rclone mount cesnet_s3: Z: --vfs-cache-mode writes --no-console\nPlace the .bat file in shell:startup (Win + R → type shell:startup).\n\n\nOne-time:\nmkdir ~/cesnet_cloud\nrclone mount cesnet_s3: ~/cesnet_cloud --vfs-cache-mode writes --daemon\nAuto-start: Create mount_cesnet.sh:\n#!/bin/bash\nrclone mount cesnet_s3: /Users/YOUR_USER/cesnet_cloud --vfs-cache-mode writes --daemon\nMake it executable (chmod +x mount_cesnet.sh) and add it in System Settings → General → Login Items."
+  },
+  {
+    "objectID": "cloud_setup.html#best-practices",
+    "href": "cloud_setup.html#best-practices",
+    "title": "Cloud Storage Setup",
+    "section": "⚠️ Best Practices",
+    "text": "⚠️ Best Practices\n\n\n\n\n\n\nWarning\n\n\n\nDon’t edit large files in place. Copy the file to your local desktop first, edit it there, then copy it back. Opening a multi-GB image directly from the cloud drive will be slow.\n\n\n\n\n\n\n\n\nTip\n\n\n\nWait for uploads. When you drag a file into cesnet_cloud/, give it a few seconds to finish uploading before shutting down your computer.\n\n\nIf the drive freezes (e.g. internet loss), unmount it:\n\n\n\nPlatform\nCommand\n\n\n\n\nLinux\nfusermount -u ~/cesnet_cloud\n\n\nWindows\nCtrl+C in the terminal\n\n\nmacOS\numount ~/cesnet_cloud"
+  }
+]
