@@ -1,0 +1,138 @@
+---
+title: "Cloud Storage Setup"
+subtitle: "Connecting to the CESNET S3 drive with Rclone"
+---
+
+::: {.callout-important}
+## Credentials
+Ask the **Project Lead** for the team `access_key_id` and `secret_access_key` before starting. Do **not** share them via Slack or email — use a secure channel.
+:::
+
+**Goal:** Mount the team's CESNET S3 bucket as a local folder so you can drag-and-drop microscopy images and retrieve results without a browser.
+
+---
+
+## Step 0 — Install Prerequisites
+
+You need **Rclone** (the connector) and a **FUSE driver** (so Rclone can present the bucket as a folder).
+
+::: {.panel-tabset}
+### 🐧 Linux
+
+```bash
+sudo apt install rclone fuse3
+```
+
+### 🪟 Windows
+
+1. Download [Rclone for Windows](https://rclone.org/downloads/), unzip, place `rclone.exe` in e.g. `C:\rclone\`, add to PATH.
+2. Download and install [WinFsp](https://winfsp.dev/) — **required** for mounting.
+
+### 🍎 macOS
+
+```bash
+brew install rclone
+```
+
+Then download and install [macFUSE](https://osxfuse.github.io/).
+
+> **Note (Apple Silicon):** You may need to allow kernel extensions in Recovery Mode for macFUSE. Check if `fuse-t` works as an alternative on M1/M2/M3.
+:::
+
+---
+
+## Step 1 — Configure the Connection
+
+Run the interactive wizard (same on all platforms):
+
+```bash
+rclone config
+```
+
+Answer the prompts as follows:
+
+| Prompt | Value |
+|---|---|
+| New remote? | `n` |
+| Name | `cesnet_s3` |
+| Storage type | Amazon S3 Compliant Storage |
+| Provider | Ceph |
+| env_auth | `false` |
+| access_key_id | *(Team Access Key)* |
+| secret_access_key | *(Team Secret Key)* |
+| endpoint | `https://s3.cl4.du.cesnet.cz` |
+| acl | `private` |
+| Save | `y` |
+
+: Rclone configuration values {.striped}
+
+---
+
+## Step 2 — Mount the Drive
+
+::: {.panel-tabset}
+### 🐧 Linux
+
+**One-time:**
+```bash
+mkdir ~/cesnet_cloud
+rclone mount cesnet_s3: ~/cesnet_cloud --vfs-cache-mode writes --daemon
+```
+
+**Auto-start on login** — open *Startup Applications*, click Add, and use this command:
+```bash
+rclone mount cesnet_s3: /home/YOUR_USER/cesnet_cloud --vfs-cache-mode writes --daemon
+```
+
+### 🪟 Windows
+
+**One-time (PowerShell):**
+```powershell
+mkdir C:\cesnet_cloud
+rclone mount cesnet_s3: C:\cesnet_cloud --vfs-cache-mode writes
+```
+
+> Keep this terminal open — closing it disconnects the drive.
+
+**Auto-start:** Create `mount_cesnet.bat` with:
+```batch
+@echo off
+start /b rclone mount cesnet_s3: Z: --vfs-cache-mode writes --no-console
+```
+Place the `.bat` file in `shell:startup` (Win + R → type `shell:startup`).
+
+### 🍎 macOS
+
+**One-time:**
+```bash
+mkdir ~/cesnet_cloud
+rclone mount cesnet_s3: ~/cesnet_cloud --vfs-cache-mode writes --daemon
+```
+
+**Auto-start:** Create `mount_cesnet.sh`:
+```bash
+#!/bin/bash
+rclone mount cesnet_s3: /Users/YOUR_USER/cesnet_cloud --vfs-cache-mode writes --daemon
+```
+Make it executable (`chmod +x mount_cesnet.sh`) and add it in **System Settings → General → Login Items**.
+:::
+
+---
+
+## ⚠️ Best Practices
+
+::: {.callout-warning}
+**Don't edit large files in place.** Copy the file to your local desktop first, edit it there, then copy it back. Opening a multi-GB image directly from the cloud drive will be slow.
+:::
+
+::: {.callout-tip}
+**Wait for uploads.** When you drag a file into `cesnet_cloud/`, give it a few seconds to finish uploading before shutting down your computer.
+:::
+
+**If the drive freezes** (e.g. internet loss), unmount it:
+
+| Platform | Command |
+|---|---|
+| Linux | `fusermount -u ~/cesnet_cloud` |
+| Windows | `Ctrl+C` in the terminal |
+| macOS | `umount ~/cesnet_cloud` |

@@ -1,0 +1,34 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Plant Stomata Counter-Analyser (PSCA)"
+  description: "Automated deep-learning pipeline for stomata detection and geometric trait extraction from microscopy images."
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: measurements.qmd
+        text: Measurements
+      - href: pipeline.qmd
+        text: Pipeline
+      - href: cloud_setup.qmd
+        text: Cloud Setup
+    right:
+      - icon: github
+        href: https://github.com/Pollination-Ecology-Group/stomata
+  page-footer:
+    center: "Pollination Ecology Group · PSCA Documentation"
+
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    css: custom.css
+    toc: true
+    toc-depth: 3
+    code-fold: false
+    code-tools: true
+    highlight-style: github

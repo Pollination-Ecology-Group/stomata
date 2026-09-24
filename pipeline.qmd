@@ -1,0 +1,157 @@
+---
+title: "Inference Pipeline"
+subtitle: "How PSCA processes microscopy images at scale"
+---
+
+## Overview
+
+PSCA is a **containerised batch pipeline** that:
+
+1. Downloads images from CESNET S3 storage
+2. Runs YOLOv11 instance segmentation on each image
+3. Extracts geometric traits from the segmentation masks
+4. Saves results to a CSV and uploads it back to S3
+
+The pipeline runs as a **Kubernetes Job** — no local GPU required.
+
+---
+
+## Architecture
+
+```{mermaid}
+flowchart LR
+    S3[(CESNET S3\nBucket)] -->|"download images\n(16 parallel workers)"| Fetch
+    S3 -->|"download model\nbest.pt"| Model
+    Model["YOLOv11\nSegmentation Model"] --> Infer
+    Fetch["Image Fetcher\n(ThreadPoolExecutor)"] --> Infer
+    Infer["YOLO Inference\n(GPU/CPU)"] --> Mask
+    Mask["Mask Post-processing\nextract_traits.py"] --> CSV
+    CSV["stomata_traits.csv"] -->|"upload results"| S3
+    
+    style S3 fill:#2d6a4f,color:#fff
+    style Model fill:#1a7a6e,color:#fff
+    style CSV fill:#4caf82,color:#fff
+```
+
+---
+
+## Step-by-Step
+
+### Step 1 — Model Download
+
+If the model is not already cached at `MODEL_PATH` (`/tmp/best.pt` by default), it is downloaded from S3 at startup:
+
+```python
+if S3_MODEL_KEY and not os.path.exists(MODEL_PATH):
+    s3.download_file(S3_BUCKET, S3_MODEL_KEY, MODEL_PATH)
+```
+
+The model key is configured via the `S3_MODEL_KEY` environment variable.
+
+---
+
+### Step 2 — Image Discovery
+
+The S3 bucket is paginated to find all `.jpg` / `.jpeg` / `.png` files under the configured prefix:
+
+```python
+paginator = s3.get_paginator('list_objects_v2')
+pages = paginator.paginate(Bucket=S3_BUCKET, Prefix=TILE_PREFIX)
+```
+
+Default prefix: `Ostatni/Stomata/extracted/`
+
+---
+
+### Step 3 — Parallel Download + Inference
+
+Images are processed in **batches of 100** to limit memory usage. Within each batch, images are downloaded concurrently using a **16-worker thread pool**:
+
+```python
+with concurrent.futures.ThreadPoolExecutor(max_workers=FETCH_WORKERS) as executor:
+    futures = [executor.submit(download_image, s3, key) for key in batch_keys]
+    for future in concurrent.futures.as_completed(futures):
+        key, img = future.result()
+        if img is not None:
+            res = process_image(model, img, image_name)
+```
+
+::: {.callout-note}
+YOLO inference itself runs sequentially on the GPU. Only image downloading is parallelised — this hides S3 network latency behind GPU compute time.
+:::
+
+---
+
+### Step 4 — Trait Extraction
+
+For each image, `process_image()` in `extract_traits.py`:
+
+1. Runs YOLO inference → gets segmentation masks + class labels
+2. Separates masks into **stoma** (class 1) and **pore** (class 0) lists
+3. For each stoma, finds the matching pore (containment check → nearest-neighbour fallback)
+4. Computes the minor axis via `cv2.minAreaRect()` and `shapely` intersection
+5. Returns a list of measurement dicts
+
+See the [Measurements](measurements.qmd) page for full trait definitions.
+
+---
+
+### Step 5 — Output & Upload
+
+Results are collected into a `pandas` DataFrame, saved to a local CSV, then uploaded to S3:
+
+```
+S3_OUTPUT_KEY = "Ostatni/Stomata/stomata_traits.csv"
+```
+
+Intermediate saves happen every 1000 images to guard against job interruption.
+
+---
+
+## Environment Variables
+
+All runtime configuration is via environment variables (set in the Kubernetes Job spec):
+
+| Variable | Default | Description |
+|---|---|---|
+| `S3_ENDPOINT` | `https://s3.cl4.du.cesnet.cz` | S3-compatible endpoint URL |
+| `S3_BUCKET` | `bucket` | Bucket name |
+| `TILE_PREFIX` | `Ostatni/Stomata/extracted/` | S3 prefix for input images |
+| `MODEL_PATH` | `/tmp/best.pt` | Local path to cache the model |
+| `S3_MODEL_KEY` | *(required)* | S3 key of the model weights |
+| `FETCH_WORKERS` | `16` | Number of parallel download threads |
+| `OUTPUT_CSV` | `/tmp/stomata_traits.csv` | Local path for CSV output |
+| `S3_OUTPUT_KEY` | `Ostatni/Stomata/stomata_traits.csv` | S3 key to upload results to |
+| `AWS_ACCESS_KEY_ID` | *(required)* | S3 access key |
+| `AWS_SECRET_ACCESS_KEY` | *(required)* | S3 secret key |
+
+: Environment variable reference {.striped .hover}
+
+---
+
+## Kubernetes Deployment
+
+### Deploy full inference job
+
+```bash
+./deploy_infer.sh
+```
+
+### Deploy test job (single-image sanity check)
+
+```bash
+./deploy_test.sh
+```
+
+Both scripts build the Docker image, push it to the registry, and apply the corresponding YAML manifest in `k8s/`.
+
+---
+
+## Source Files
+
+| File | Purpose |
+|---|---|
+| [`src/extract_traits.py`](https://github.com/Pollination-Ecology-Group/stomata/blob/main/src/extract_traits.py) | Core measurement logic — `process_image()`, `get_minor_axis_line()` |
+| [`src/run_inference_s3.py`](https://github.com/Pollination-Ecology-Group/stomata/blob/main/src/run_inference_s3.py) | S3-aware batch runner |
+| [`k8s/stomata-infer-job.yaml`](https://github.com/Pollination-Ecology-Group/stomata/blob/main/k8s/stomata-infer-job.yaml) | Kubernetes Job manifest (full run) |
+| [`k8s/stomata-test-job.yaml`](https://github.com/Pollination-Ecology-Group/stomata/blob/main/k8s/stomata-test-job.yaml) | Kubernetes Job manifest (test run) |

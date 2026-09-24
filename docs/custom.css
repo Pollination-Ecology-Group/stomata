@@ -1,0 +1,107 @@
+/* PSCA Documentation — Custom Styles */
+
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --psca-green: #2d7a4f;
+  --psca-teal: #1a7a6e;
+  --psca-accent: #4caf82;
+  --psca-light: #f0f7f4;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Hero banner on homepage */
+.hero-banner {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #1a7a6e 100%);
+  color: white;
+  padding: 3.5rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(45, 122, 79, 0.25);
+}
+
+.hero-banner h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.hero-banner p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 0;
+}
+
+/* Metric cards */
+.metric-card {
+  border: 1px solid #e0ece6;
+  border-radius: 10px;
+  padding: 1.4rem;
+  background: #f8fdf9;
+  border-left: 4px solid var(--psca-green);
+  margin-bottom: 1rem;
+}
+
+.metric-card h4 {
+  color: var(--psca-green);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.metric-card .metric-formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  background: #e8f5ed;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  color: #1b4332;
+}
+
+/* Pipeline step boxes */
+.pipeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  background: var(--psca-light);
+  margin-bottom: 0.8rem;
+  border: 1px solid #d0eadb;
+}
+
+.step-number {
+  background: var(--psca-green);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 50%;
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Output CSV table styling */
+.output-table th {
+  background-color: var(--psca-green);
+  color: white;
+}
+
+/* Callout overrides */
+.callout {
+  border-radius: 8px;
+}
+
+/* Navbar brand color hint */
+.navbar-brand {
+  font-weight: 700;
+}
