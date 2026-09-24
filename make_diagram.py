@@ -154,12 +154,15 @@ def main():
     fill_poly(crop, ss, C_STOMA,     alpha=0.17, border=3)
     fill_poly(crop, ps, C_PORE_POLY, alpha=0.32, border=2)
 
-    # ── Compute axes ──
-    pts2 = np.array(ss.exterior.coords[:-1], dtype=np.float32)
-    rect = cv2.minAreaRect(pts2)
-    (rcx, rcy), (rw, rh), rang = rect
-    major_angle = rang      if rw >= rh else rang + 90
-    minor_angle = major_angle + 90
+    # ── Compute axes from the PORE polygon ──
+    # The pore (class 0) is elongated — its long axis defines the stoma orientation.
+    # All four measurements are derived from this direction.
+    pore_pts = np.array(ps.exterior.coords[:-1], dtype=np.float32)
+    pore_rect = cv2.minAreaRect(pore_pts)
+    (prcx, prcy), (prw, prh), prang = pore_rect
+    # major_angle = direction of pore's long axis
+    major_angle = prang      if prw >= prh else prang + 90
+    minor_angle = major_angle + 90   # perpendicular = stoma width direction
 
     cen  = centroid_np(ss)
     pcen = centroid_np(ps)
@@ -171,8 +174,11 @@ def main():
                            math.sin(math.radians(minor_angle))])
 
     # Chord endpoints
+    # Major: through stoma centroid along pore's long axis → full stoma length
     maj_p1, maj_p2 = intersection_endpoints(ss, cen,  major_angle)
+    # Minor: through stoma centroid perpendicular → full stoma width
     min_p1, min_p2 = intersection_endpoints(ss, cen,  minor_angle)
+    # Pore width: through pore centroid along minor_angle → pore aperture width
     por_p1, por_p2 = intersection_endpoints(ps, pcen, minor_angle)
 
     if maj_p1 is None or min_p1 is None or por_p1 is None:
@@ -183,70 +189,83 @@ def main():
     # Pore width:         +major_offset px along major axis direction
     # Guard cell bracket: same offset as pore
 
-    MAJOR_OFF = major_vec * 35   # pixels to shift right along major axis
+    MAJOR_OFF = major_vec * 35   # shift pore/guard arrows perpendicular
 
-    # ── Draw Major axis (no offset) ──
+    # ── Draw Major axis (through stoma centroid, vertical = pore long axis) ──
     if maj_p1 is not None:
         double_arrow(crop, maj_p1, maj_p2, C_MAJOR, 3)
-        # label above the midpoint
-        mid = (maj_p1+maj_p2)/2
-        put_text(crop, "Major axis", mid + np.array([-50, -22]), C_MAJOR)
+        # label at whichever tip is higher on screen (smaller y)
+        tip = maj_p1 if maj_p1[1] < maj_p2[1] else maj_p2
+        put_text(crop, "Major axis", tip + np.array([8, -10]), C_MAJOR)
 
-    # ── Draw Minor axis (stoma width) ──
+    # ── Draw Minor axis (horizontal, through stoma centroid) ──
     if min_p1 is not None:
         double_arrow(crop, min_p1, min_p2, C_MINOR, 3)
-        mid = (min_p1+min_p2)/2
-        put_text(crop, "Minor axis", mid + np.array([10, 25]), C_MINOR)
+        # label at the right-most arrowhead
+        tip = min_p1 if min_p1[0] > min_p2[0] else min_p2
+        put_text(crop, "Minor axis", tip + np.array([6, -8]), C_MINOR)
 
-    # ── Draw Pore width (offset along major direction) ──
+    # ── Draw Pore width (offset +35px along major_vec from stoma centre) ──
     if por_p1 is not None:
         pp1 = por_p1 + MAJOR_OFF
         pp2 = por_p2 + MAJOR_OFF
         double_arrow(crop, pp1, pp2, C_PORE_LINE, 3)
-        mid = (pp1+pp2)/2
-        put_text(crop, "Pore width", mid + np.array([10, 25]), C_PORE_LINE)
+        # label at the right-most tip
+        tip = pp1 if pp1[0] > pp2[0] else pp2
+        put_text(crop, "Pore width", tip + np.array([6, -8]), C_PORE_LINE)
 
-        # ── Guard cell (one side: from pore-edge to stoma-edge, same offset) ──
+        # ── Guard cell (opposite side, -35px along major_vec) ──
         if min_p1 is not None:
-            mdir   = (min_p2-min_p1) / np.linalg.norm(min_p2-min_p1)
-            d1     = np.dot(por_p1 - cen, mdir)
-            d2     = np.dot(por_p2 - cen, mdir)
-            por_near  = por_p1 if d1 < d2 else por_p2   # pore end toward negative direction
-            sto_near  = min_p1 if np.dot(min_p1-cen, mdir) < 0 else min_p2  # stoma end same side
+            mdir      = (min_p2-min_p1) / np.linalg.norm(min_p2-min_p1)
+            d1        = np.dot(por_p1 - cen, mdir)
+            d2        = np.dot(por_p2 - cen, mdir)
+            por_near  = por_p1 if d1 < d2 else por_p2
+            sto_near  = min_p1 if np.dot(min_p1-cen, mdir) < 0 else min_p2
+            draw_off  = major_vec * (-35)
+            gc_a = por_near + draw_off
+            gc_b = sto_near + draw_off
+            double_arrow(crop, gc_a, gc_b, C_GUARD, 3)
+            # label at the left-most tip
+            tip = gc_a if gc_a[0] < gc_b[0] else gc_b
+            put_text(crop, "Guard cell", tip + np.array([-115, -8]), C_GUARD)
 
-            gc_p1 = por_near  + MAJOR_OFF
-            gc_p2 = sto_near  + MAJOR_OFF
-            draw_off = major_vec * (-35)  # guard cell on opposite side
-            double_arrow(crop, por_near + draw_off, sto_near + draw_off, C_GUARD, 3)
-            mid_gc = (por_near + sto_near)/2 + draw_off
-            put_text(crop, "Guard cell", mid_gc + np.array([-110, 25]), C_GUARD)
-
-    # ── Legend ──
+    # ── Legend — rendered as a separate strip BELOW the image ──
     legend = [
-        (C_STOMA,     "Stoma body  (class 1)"),
-        (C_PORE_POLY, "Pore / aperture  (class 0)"),
+        (C_STOMA,     "Stoma body (class 1)"),
+        (C_PORE_POLY, "Pore / aperture (class 0)"),
         (C_MAJOR,     "Major axis length"),
         (C_MINOR,     "Minor axis  (stoma width)"),
         (C_PORE_LINE, "Pore width"),
-        (C_GUARD,     "Guard cell = (minor \u2212 pore) / 2"),
+        (C_GUARD,     "Guard cell width = (minor \u2212 pore) / 2"),
     ]
-    lx, ly, lh, lw = 10, 10, 30, 360
-    ov = crop.copy()
-    cv2.rectangle(ov, (lx-6, ly-6), (lx+lw, ly+len(legend)*lh+10), (15,15,15), -1)
-    cv2.addWeighted(ov, 0.70, crop, 0.30, 0, crop)
+    IW = crop.shape[1]
+    LH = 32           # row height in legend strip
+    COLS = 2          # two-column layout
+    ROWS = math.ceil(len(legend) / COLS)
+    STRIP_H = ROWS * LH + 16
+    strip = np.full((STRIP_H, IW, 3), 28, dtype=np.uint8)  # dark background
+
+    col_w = IW // COLS
     for i, (col, label) in enumerate(legend):
-        y = ly + i*lh + lh//2
-        cv2.rectangle(crop, (lx, y-7), (lx+20, y+7), col, -1)
-        cv2.putText(crop, label, (lx+28, y+5),
+        row = i % ROWS
+        c   = i // ROWS
+        x   = c * col_w + 10
+        y   = row * LH + LH // 2 + 8
+        cv2.rectangle(strip, (x, y-8), (x+18, y+8), col, -1)
+        cv2.putText(strip, label, (x+24, y+5),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.52, C_WHITE, 1, cv2.LINE_AA)
+
+    # Thin separator line
+    sep = np.full((3, IW, 3), 80, dtype=np.uint8)
+    final = np.vstack([crop, sep, strip])
 
     # Save alongside measurements.qmd (picked up by `quarto render`)
     out_root = OUT_ROOT / "stomata_diagram.png"
-    cv2.imwrite(str(out_root), crop)
+    cv2.imwrite(str(out_root), final)
     # Also overwrite in docs/ so the pre-built site is immediately correct
     out_docs = OUT_DOCS / "stomata_diagram.png"
-    cv2.imwrite(str(out_docs), crop)
-    print(f"Saved {out_root}  and  {out_docs}  ({crop.shape[1]}x{crop.shape[0]})")
+    cv2.imwrite(str(out_docs), final)
+    print(f"Saved {out_root}  and  {out_docs}  ({final.shape[1]}x{final.shape[0]})")
 
 
 if __name__ == "__main__":
