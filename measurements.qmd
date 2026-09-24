@@ -30,7 +30,7 @@ $$
 $$
 
 ::: callout-note
-This calibration is specific to the microscope/objective used by the Pollination Ecology Group. If you change optics, update `PX_TO_UM` in `src/extract_traits.py`.
+This calibration is specific to the microscope and objective used during image acquisition. If you use different optics, update `PX_TO_UM` in `src/extract_traits.py`.
 :::
 
 ------------------------------------------------------------------------
