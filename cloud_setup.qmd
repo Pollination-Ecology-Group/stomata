@@ -84,6 +84,12 @@ rclone mount cesnet_s3: ~/cesnet_cloud --vfs-cache-mode writes --daemon
 rclone mount cesnet_s3: /home/YOUR_USER/cesnet_cloud --vfs-cache-mode writes --daemon
 ```
 
+**Alternative — Direct S3FS Mount (`peg-bucket`):**
+```bash
+mkdir -p ~/cesnet_new
+s3fs peg-bucket ~/cesnet_new -o passwd_file=${HOME}/.passwd-s3fs -o url=https://s3.cl4.du.cesnet.cz -o use_path_request_style -o allow_other -o uid=$(id -u) -o gid=$(id -g)
+```
+
 ### 🪟 Windows
 
 **One-time (PowerShell):**

@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stomata-train-job
+  namespace: stenc-ns
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: stomata-trainer
+        image: ultralytics/ultralytics:latest
+        imagePullPolicy: IfNotPresent
+        workingDir: /tmp
+        command:
+          - /bin/bash
+          - -c
+          - |
+            set -e
+            export HOME=/tmp
+            export PATH=$PATH:$HOME/.local/bin
+            echo "Installing required Python dependencies..."
+            pip install --user boto3 pyyaml albumentations --quiet
+            echo "Configuring Ultralytics writable paths..."
+            mkdir -p /tmp/stomata_train/weights /tmp/stomata_train/runs /tmp/stomata_train/datasets
+            yolo settings weights_dir='/tmp/stomata_train/weights' runs_dir='/tmp/stomata_train/runs' datasets_dir='/tmp/stomata_train/datasets'
+            echo "Starting Stomata model training pipeline..."
+            cd /tmp/stomata_train
+            python3 /scripts/train_stomata_s3.py
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        envFrom:
+        - secretRef:
+            name: s3-creds
+        env:
+          - name: S3_ENDPOINT
+            value: "https://s3.cl4.du.cesnet.cz"
+          - name: S3_BUCKET
+            value: "peg-bucket"
+          - name: S3_STAGED_PREFIX
+            value: "Ostatni/Stomata/staged_area/"
+          - name: S3_BACKGROUNDS_PREFIX
+            value: "Ostatni/Stomata/backgrounds/"
+          - name: S3_MODELS_PREFIX
+            value: "Ostatni/Stomata/trained_models/"
+          - name: S3_RUNS_PREFIX
+            value: "Ostatni/Stomata/training_runs/"
+          - name: BASE_MODEL
+            value: "yolo11m-seg.pt"
+          - name: EPOCHS
+            value: "120"
+          - name: BATCH_SIZE
+            value: "16"
+          - name: IMG_SIZE
+            value: "640"
+          - name: PATIENCE
+            value: "30"
+          - name: VAL_SPLIT
+            value: "0.15"
+        resources:
+          requests:
+            memory: "16Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "32Gi"
+            cpu: "8"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: script-volume
+          mountPath: /scripts
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 50Gi
+      - name: script-volume
+        configMap:
+          name: stomata-train-script
+      restartPolicy: Never

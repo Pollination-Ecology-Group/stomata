@@ -1,0 +1,11 @@
+image_name,total_stomata_count,stomatal_density_per_mm2,edge_stomata_count,blurred_stomata_count,ploidy_sample_count,ploidy_median_stoma_length_um,ploidy_mean_stoma_length_um,ploidy_stoma_length_std_um,ploidy_median_stoma_width_um,ploidy_median_guard_cell_width_um,ploidy_median_aperture_um
+2-4-C_AD_3.jpg,36,228.9,6,19,15,20.48,20.66,1.45,18.8,7.03,4.8
+5-10-D_AB_3.png,33,209.8,3,8,23,17.06,17.07,1.4,14.98,5.59,3.94
+5-10-D_AB_4.png,47,298.8,7,32,14,17.34,17.38,1.41,15.62,5.5,4.08
+5-10-D_AD_3.png,39,247.9,5,22,17,17.07,16.86,0.67,15.87,5.73,4.54
+5-9-D_AB_3.png,18,114.4,5,3,10,26.42,26.05,3.0,20.4,7.34,5.82
+5-9-E_AB_1.png,35,222.5,5,6,26,20.94,20.86,1.94,17.56,6.51,4.32
+5-9-E_AD_2.png,43,273.4,10,22,16,21.04,20.61,1.41,19.02,6.9,4.81
+6-3-C_AB_3.png,42,267.0,11,16,21,18.48,18.02,1.18,17.0,6.2,4.43
+6-3-D_AB_2.png,58,368.7,8,16,39,17.78,17.7,1.72,15.73,5.82,3.84
+6-4-A_AD_1.png,57,362.4,8,19,33,17.94,18.09,1.32,16.29,6.15,3.99

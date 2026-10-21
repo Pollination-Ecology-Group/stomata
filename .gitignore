@@ -12,3 +12,6 @@ __pycache__/
 # Scratch / generated images (not source controlled)
 example_annotated.png
 example_field.png
+
+/.quarto/
+**/*.quarto_ipynb

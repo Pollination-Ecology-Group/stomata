@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stomata-crop-job
+  namespace: stenc-ns
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: stomata-cropper
+        image: ultralytics/ultralytics:latest
+        workingDir: /tmp
+        command:
+          - /bin/bash
+          - -c
+          - |
+            pip install --user boto3 --quiet
+            cp /scripts/crop_for_labeling_s3.py /tmp/crop_for_labeling_s3.py
+            python /tmp/crop_for_labeling_s3.py
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        envFrom:
+        - secretRef:
+            name: s3-creds
+        env:
+          - name: S3_ENDPOINT
+            value: "https://s3.cl4.du.cesnet.cz"
+          - name: S3_BUCKET
+            value: "peg-bucket"
+          - name: SOURCE_PREFIX
+            value: "Ostatni/Stomata/extracted/stomata_trait_comparison/new population/"
+          - name: S3_MODEL_KEY
+            value: "Ostatni/Stomata/trained_models/stomata_2class_2025-12-11_22-26.pt"
+          - name: MODEL_PATH
+            value: "/tmp/stomata_best.pt"
+          - name: S3_DEST_PREFIX
+            value: "Ostatni/Stomata/crops_for_labeling/"
+          - name: N_CROPS
+            value: "500"
+          - name: HARD_FRAC
+            value: "0.60"
+          - name: CONF_THRESH
+            value: "0.55"
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: script-volume
+          mountPath: /scripts
+      volumes:
+      - name: script-volume
+        configMap:
+          name: stomata-crop-script
+      restartPolicy: Never

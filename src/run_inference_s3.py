@@ -14,11 +14,16 @@ from ultralytics import YOLO
 from extract_traits import process_image
 
 S3_ENDPOINT = os.environ.get("S3_ENDPOINT", "https://s3.cl4.du.cesnet.cz")
-S3_BUCKET = os.environ.get("S3_BUCKET", "bucket")
-TILE_PREFIX = os.environ.get("TILE_PREFIX", "Ostatni/Stomata/extracted/")
-MODEL_PATH = os.environ.get("MODEL_PATH", "/tmp/best.pt")
-S3_MODEL_KEY = os.environ.get("S3_MODEL_KEY")
+S3_BUCKET = os.environ.get("S3_BUCKET", "peg-bucket")
+TILE_PREFIX = os.environ.get("TILE_PREFIX", "Ostatni/Stomata/detect/")
+MODEL_PATH = os.environ.get("MODEL_PATH", "/tmp/stomata_best_latest.pt")
+S3_MODEL_KEY = os.environ.get("S3_MODEL_KEY", "Ostatni/Stomata/trained_models/stomata_best_latest.pt")
 FETCH_WORKERS = int(os.environ.get("FETCH_WORKERS", "16"))
+TILE_SIZE = int(os.environ.get("TILE_SIZE", "640"))
+STRIDE = int(os.environ.get("STRIDE", "448"))
+CONF_STOMA = float(os.environ.get("CONF_STOMA", "0.18"))
+CONF_CENTER = float(os.environ.get("CONF_CENTER", "0.38"))
+ENHANCE_CONTRAST = os.environ.get("ENHANCE_CONTRAST", "true").lower() in ("true", "1", "yes")
 OUTPUT_CSV = os.environ.get("OUTPUT_CSV", "/tmp/stomata_traits.csv")
 S3_OUTPUT_KEY = os.environ.get("S3_OUTPUT_KEY", "Ostatni/Stomata/stomata_traits.csv")
 
@@ -27,7 +32,7 @@ def get_s3_client():
                         endpoint_url=S3_ENDPOINT,
                         aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
                         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
-                        config=Config(signature_version='s3v4'))
+                        config=Config(signature_version='s3v4', s3={'addressing_style': 'path'}))
 
 def download_image(s3_client, key):
     try:
@@ -59,7 +64,7 @@ def main():
         if 'Contents' in page:
             for obj in page['Contents']:
                 key = obj['Key']
-                if key.lower().endswith(('.jpg', '.jpeg', '.png')):
+                if key.lower().endswith(('.jpg', '.jpeg', '.png', '.tif', '.tiff')):
                     image_keys.append(key)
                     
     print(f"Found {len(image_keys)} images.")
@@ -81,10 +86,14 @@ def main():
             for future in concurrent.futures.as_completed(futures):
                 key, img = future.result()
                 if img is not None:
-                    # Run inference (YOLO handles PIL images directly)
-                    # We pass the basename as image_name, or the full key if preferred
+                    # Run inference with sliding-window tiling and spatial prior
                     image_name = os.path.basename(key)
-                    res = process_image(model, img, image_name)
+                    res = process_image(
+                        model, img, image_name,
+                        tile_size=TILE_SIZE, stride=STRIDE,
+                        conf_stoma=CONF_STOMA, conf_center=CONF_CENTER,
+                        enhance_contrast=ENHANCE_CONTRAST
+                    )
                     # Add the full S3 key to the results as well
                     for r in res:
                         r['s3_key'] = key

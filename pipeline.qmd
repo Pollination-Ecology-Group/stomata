@@ -115,7 +115,7 @@ All runtime configuration is via environment variables (set in the Kubernetes Jo
 | Variable | Default | Description |
 |---|---|---|
 | `S3_ENDPOINT` | `https://s3.cl4.du.cesnet.cz` | S3-compatible endpoint URL |
-| `S3_BUCKET` | `bucket` | Bucket name |
+| `S3_BUCKET` | `peg-bucket` | Bucket name |
 | `TILE_PREFIX` | `Ostatni/Stomata/extracted/` | S3 prefix for input images |
 | `MODEL_PATH` | `/tmp/best.pt` | Local path to cache the model |
 | `S3_MODEL_KEY` | *(required)* | S3 key of the model weights |
