@@ -1,0 +1,86 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stomata-inference-job
+  namespace: stenc-ns
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: stomata-inferencer
+        image: ultralytics/ultralytics:latest
+        imagePullPolicy: IfNotPresent
+        workingDir: /tmp
+        command:
+          - /bin/bash
+          - -c
+          - |
+            set -e
+            export HOME=/tmp
+            export PATH=$PATH:$HOME/.local/bin
+            echo "Installing Python dependencies (boto3, openpyxl, albumentations, shapely, pandas)..."
+            pip install --user boto3 openpyxl albumentations shapely pandas --quiet
+            echo "Starting Stomata Full Batch Inference on GPU..."
+            python3 /scripts/run_stomata_full_inference.py
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        envFrom:
+        - secretRef:
+            name: s3-creds
+        - secretRef:
+            name: email-credentials
+        env:
+          - name: S3_ENDPOINT
+            value: "https://s3.cl4.du.cesnet.cz"
+          - name: S3_BUCKET
+            value: "peg-bucket"
+          - name: S3_MODEL_KEY
+            value: "Ostatni/Stomata/trained_models/stomata_best_latest.pt"
+          - name: S3_META_KEY
+            value: "Ostatni/Stomata/metadata/stomata_sampling_trait_comparison_by_sample.xlsx"
+          - name: S3_OUTPUT_PREFIX
+            value: "Ostatni/Stomata/inference_results"
+          - name: EMAIL_RECIPIENT
+            value: "jakubstenc@gmail.com"
+          - name: FETCH_WORKERS
+            value: "16"
+          - name: MIN_FOCUS
+            value: "2.8"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: script-volume
+          mountPath: /scripts
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 8Gi
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 20Gi
+      - name: script-volume
+        configMap:
+          name: stomata-inference-script
+      restartPolicy: Never
