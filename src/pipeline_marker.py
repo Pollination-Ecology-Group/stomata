@@ -68,6 +68,8 @@ def put_json(s3, key, payload):
 
 
 def cmd_archive(s3):
+    for stale in ("DONE.json", "FAILED.json"):
+        s3.delete_object(Bucket=S3_BUCKET, Key=f"{PIPELINE_PREFIX}/{RUN_ID}/{stale}")
     dest = f"{OUT_PREFIX}/archive/{RUN_ID}_previous"
     for name in RESULT_FILES:
         src = f"{OUT_PREFIX}/{name}"

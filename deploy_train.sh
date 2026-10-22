@@ -13,6 +13,7 @@ kubectl create configmap "${CONFIGMAP_NAME}" \
   --from-file=train_stomata_s3.py=src/train_stomata_s3.py \
   --from-file=run_stomata_full_inference.py=src/run_stomata_full_inference.py \
   --from-file=extract_traits.py=src/extract_traits.py \
+  --from-file=pipeline_marker.py=src/pipeline_marker.py \
   -n "${NAMESPACE}" \
   --dry-run=client -o yaml | kubectl apply -f -
 

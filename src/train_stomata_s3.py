@@ -268,7 +268,7 @@ def train(yaml_file: Path):
 
         orig_init = aug.Albumentations.__init__
 
-        def custom_albumentations_init(self, p=1.0, transforms=None, flip_idx=None):
+        def custom_albumentations_init(self, *args, **kwargs):
             microscopy_transforms = [
                 A.Blur(blur_limit=(3, 9), p=0.35),
                 A.MedianBlur(blur_limit=(3, 7), p=0.25),
@@ -276,7 +276,12 @@ def train(yaml_file: Path):
                 A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.25, p=0.30),
                 A.RandomGamma(gamma_limit=(80, 120), p=0.25),
             ]
-            orig_init(self, p=p, transforms=microscopy_transforms, flip_idx=flip_idx)
+            # Signature differs between Ultralytics releases (e.g. `flip_idx` was removed);
+            # forward everything unchanged and only replace the transform list.
+            kwargs["transforms"] = microscopy_transforms
+            if args:  # positional form: (p, transforms, ...)
+                args = (args[0],) + args[2:] if len(args) > 1 else args
+            orig_init(self, *args, **kwargs)
 
         aug.Albumentations.__init__ = custom_albumentations_init
         print("[+] Injected microscopy Defocus/Blur & CLAHE augmentations into training pipeline.")
@@ -349,7 +354,8 @@ def upload_results(s3_client, best_weights: Path, run_save_dir: Path):
     print(f"    Run metrics:     s3://{S3_BUCKET}/{s3_run_prefix}")
 
     # 4. Dispatch Email Notification
-    subject = f"✅ Stomata YOLO Retraining Completed: {versioned_model_name} (v7 + Backgrounds)"
+    dataset_name = os.environ.get("DATASET_ZIP_NAME", "latest staged dataset")
+    subject = f"✅ Stomata YOLO Retraining Completed: {versioned_model_name} ({dataset_name} + Backgrounds)"
     email_body = f"""Hello Jakub,
 
 Your Stomata YOLO retraining run on the CESNET GPU cluster has completed successfully!
@@ -385,6 +391,7 @@ def main():
     local_zip_path = WORK_DIR / Path(latest_zip_key).name
     print(f"[*] Downloading {latest_zip_key} -> {local_zip_path}...")
     s3.download_file(S3_BUCKET, latest_zip_key, str(local_zip_path))
+    os.environ["DATASET_ZIP_NAME"] = Path(latest_zip_key).name
 
     # 2. Download background negative images
     bg_download_dir = WORK_DIR / "raw_backgrounds"

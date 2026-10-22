@@ -1,0 +1,123 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stomata-report-job
+  namespace: stenc-ns
+spec:
+  backoffLimit: 0
+  # Must outlive training + inference; the fetch step itself gives up after MAX_WAIT_HOURS
+  activeDeadlineSeconds: 57600
+  ttlSecondsAfterFinished: 604800
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      # 1) Wait for the GPU train/inference job's DONE/FAILED marker, then download data
+      - name: wait-and-fetch
+        image: python:3.12-slim
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            set -e
+            export HOME=/tmp PATH=$PATH:/tmp/.local/bin
+            pip install --user --quiet boto3
+            python3 /report/report_fetch.py
+        envFrom:
+        - secretRef:
+            name: s3-creds
+        env: &common_env
+          - name: RUN_ID
+            value: "v8-20261022"
+          - name: S3_ENDPOINT
+            value: "https://s3.cl4.du.cesnet.cz"
+          - name: S3_BUCKET
+            value: "peg-bucket"
+          - name: WORK_DIR
+            value: "/work"
+          - name: POLL_SECONDS
+            value: "300"
+          - name: MAX_WAIT_HOURS
+            value: "14"
+          - name: EMAIL_RECIPIENT
+            value: "jakubstenc@gmail.com"
+          - name: DRY_RUN
+            value: "false"
+        securityContext: &csec
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        resources: &small
+          requests: {cpu: "100m", memory: "256Mi"}
+          limits: {cpu: "1", memory: "1Gi"}
+        volumeMounts: &mounts
+        - {name: work, mountPath: /work}
+        - {name: tmp, mountPath: /tmp}
+        - {name: report-files, mountPath: /report}
+      # 2) Render the PDF report with R + Quarto (never fails the pod; errors go to render.log)
+      - name: render-report
+        image: rocker/verse:4.4
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            export HOME=/tmp R_LIBS_USER=/tmp/Rlib TEXMFVAR=/tmp/texmf-var XDG_CACHE_HOME=/tmp/.cache
+            mkdir -p "$R_LIBS_USER"
+            if [ "$(cat /work/status.txt 2>/dev/null)" != "DONE" ]; then
+              echo "Pipeline status is not DONE; skipping render."; exit 0
+            fi
+            (
+              set -e
+              Rscript -e 'pk <- c("lme4","lmerTest","emmeans","ragg","jsonlite","knitr","rmarkdown","dplyr","tidyr","ggplot2"); miss <- pk[!vapply(pk, requireNamespace, logical(1), quietly = TRUE)]; if (length(miss)) install.packages(miss, lib = Sys.getenv("R_LIBS_USER"), Ncpus = 4); stopifnot(all(vapply(pk, requireNamespace, logical(1), quietly = TRUE)))'
+              cp /report/short_report.qmd /work/short_report.qmd
+              cd /work
+              export NEW_SUMMARY=/work/new_image_summary.csv NEW_STOMATA=/work/new_stomata.csv
+              export PREV_SUMMARY=/work/prev_image_summary.csv PREV_STOMATA=/work/prev_stomata.csv
+              export NEW_TRAIN=/work/new_train_results.csv PREV_TRAIN=/work/prev_train_results.csv
+              export RUN_INFO=/work/run_info.json
+              quarto render short_report.qmd --to pdf
+            ) > /work/render.log 2>&1 || echo "[!] Render failed"
+            tail -n 30 /work/render.log
+            exit 0
+        env: *common_env
+        securityContext: *csec
+        resources:
+          requests: {cpu: "500m", memory: "2Gi"}
+          limits: {cpu: "4", memory: "8Gi"}
+        volumeMounts: *mounts
+      containers:
+      # 3) E-mail the PDF (or a failure notice) and upload the PDF to S3
+      - name: email-report
+        image: python:3.12-slim
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            set -e
+            export HOME=/tmp PATH=$PATH:/tmp/.local/bin
+            pip install --user --quiet boto3
+            python3 /report/report_email.py
+        envFrom:
+        - secretRef:
+            name: s3-creds
+        - secretRef:
+            name: email-credentials
+        env: *common_env
+        securityContext: *csec
+        resources: *small
+        volumeMounts: *mounts
+      volumes:
+      - name: work
+        emptyDir: {sizeLimit: 2Gi}
+      - name: tmp
+        emptyDir: {sizeLimit: 6Gi}
+      - name: report-files
+        configMap:
+          name: stomata-report-files
+      restartPolicy: Never
