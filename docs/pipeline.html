@@ -312,6 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="nav-link" href="./cloud_setup.html"> 
 <span class="menu-text">Cloud Setup</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./analysis.html"> 
+<span class="menu-text">Analysis Report</span></a>
+  </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
@@ -507,7 +511,7 @@ Note
 </tr>
 <tr class="even">
 <td><code>S3_BUCKET</code></td>
-<td><code>bucket</code></td>
+<td><code>peg-bucket</code></td>
 <td>Bucket name</td>
 </tr>
 <tr class="odd">
@@ -1183,7 +1187,7 @@ Note
 <span id="cb7-117"><a href="#cb7-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variable <span class="pp">|</span> Default <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb7-118"><a href="#cb7-118" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
 <span id="cb7-119"><a href="#cb7-119" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`S3_ENDPOINT`</span> <span class="pp">|</span> <span class="in">`https://s3.cl4.du.cesnet.cz`</span> <span class="pp">|</span> S3-compatible endpoint URL <span class="pp">|</span></span>
-<span id="cb7-120"><a href="#cb7-120" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`S3_BUCKET`</span> <span class="pp">|</span> <span class="in">`bucket`</span> <span class="pp">|</span> Bucket name <span class="pp">|</span></span>
+<span id="cb7-120"><a href="#cb7-120" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`S3_BUCKET`</span> <span class="pp">|</span> <span class="in">`peg-bucket`</span> <span class="pp">|</span> Bucket name <span class="pp">|</span></span>
 <span id="cb7-121"><a href="#cb7-121" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`TILE_PREFIX`</span> <span class="pp">|</span> <span class="in">`Ostatni/Stomata/extracted/`</span> <span class="pp">|</span> S3 prefix for input images <span class="pp">|</span></span>
 <span id="cb7-122"><a href="#cb7-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`MODEL_PATH`</span> <span class="pp">|</span> <span class="in">`/tmp/best.pt`</span> <span class="pp">|</span> Local path to cache the model <span class="pp">|</span></span>
 <span id="cb7-123"><a href="#cb7-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`S3_MODEL_KEY`</span> <span class="pp">|</span> *(required)* <span class="pp">|</span> S3 key of the model weights <span class="pp">|</span></span>

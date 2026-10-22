@@ -1,0 +1,11 @@
+# Roboflow / YOLOv8 / YOLO11 Segmentation Dataset Configuration
+# Generated with Active Learning Targeted on Low-Confidence Detections
+train: ./images
+val: ./images
+
+nc: 2
+names: ['center', 'stomata-huw1']
+
+roboflow:
+  project: stomata-retraining
+  description: "200 targeted low-confidence, closed-pore, and blurred crops with model-assisted pre-annotations"

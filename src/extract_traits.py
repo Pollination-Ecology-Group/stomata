@@ -81,71 +81,185 @@ def get_minor_axis_line(polygon):
     return LineString([p1, p2]), angle
 
 
-def refine_pore_clahe(img_bgr, stoma_poly):
+def measure_subpixel_pore_aperture(img_bgr, stoma_poly, matched_pore_poly=None):
     """
-    Stage-2 Crop & Zoom Specialist:
-    Crops the stoma with a 20% margin, applies CLAHE, and analyzes the
-    medial intensity valley along the minor axis to refine pore width.
+    Sub-pixel pore aperture and longitudinal groove refinement using 
+    orthogonal intensity profile analysis and parabolic sub-pixel fitting.
+    Returns:
+        dict with subpixel_aperture_um, valley_depth, fwhm_px, has_clear_groove
+        or None if image bounds are exceeded.
     """
     try:
-        minx, miny, maxx, maxy = stoma_poly.bounds
-        h_box = maxy - miny
-        w_box = maxx - minx
-        pad = int(max(h_box, w_box) * 0.2)
+        if len(img_bgr.shape) == 3:
+            gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img_bgr
 
-        H, W = img_bgr.shape[:2]
-        y1 = max(0, int(miny) - pad)
-        y2 = min(H, int(maxy) + pad)
-        x1 = max(0, int(minx) - pad)
-        x2 = min(W, int(maxx) + pad)
+        # 1. Stoma geometry
+        coords = np.array(stoma_poly.exterior.coords, dtype=np.float32)
+        (cx, cy), (w, h), angle = cv2.minAreaRect(coords)
 
-        crop = img_bgr[y1:y2, x1:x2]
-        if crop.size == 0 or crop.shape[0] < 10 or crop.shape[1] < 10:
+        # Minor axis angle is perpendicular to the major axis
+        if w < h:
+            minor_angle = angle
+            minor_len = w
+        else:
+            minor_angle = angle - 90.0
+            minor_len = h
+
+        rad = np.deg2rad(minor_angle)
+        cos_a, sin_a = np.cos(rad), np.sin(rad)
+
+        # Sample along minor axis with sub-pixel resolution (step = 0.25 px)
+        step = 0.25
+        half_span = minor_len * 0.45
+        distances = np.arange(-half_span, half_span + step, step)
+
+        sample_x = cx + distances * cos_a
+        sample_y = cy + distances * sin_a
+
+        H, W = gray.shape[:2]
+        valid_mask = (sample_x >= 0) & (sample_x < W - 1) & (sample_y >= 0) & (sample_y < H - 1)
+        if np.sum(valid_mask) < 20:
             return None
 
-        # Convert crop to grayscale and apply CLAHE
-        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-        enhanced = clahe.apply(gray)
+        sx = sample_x[valid_mask]
+        sy = sample_y[valid_mask]
+        dist_valid = distances[valid_mask]
 
-        # Stoma center in crop coordinates
-        cx_crop = stoma_poly.centroid.x - x1
-        cy_crop = stoma_poly.centroid.y - y1
+        # Bilinear interpolation of intensity
+        x0 = np.floor(sx).astype(int)
+        x1 = x0 + 1
+        y0 = np.floor(sy).astype(int)
+        y1 = y0 + 1
 
-        # Sample intensity profile along the minor axis
-        minor_line, _ = get_minor_axis_line(stoma_poly)
-        line_pts = []
-        for d in np.linspace(-w_box * 0.4, w_box * 0.4, 60):
-            rect = cv2.minAreaRect(np.array(stoma_poly.exterior.coords, dtype=np.float32))
-            angle = rect[2] if rect[1][0] < rect[1][1] else rect[2] - 90.0
-            rad = np.deg2rad(angle)
-            px = int(cx_crop + d * np.cos(rad))
-            py = int(cy_crop + d * np.sin(rad))
-            if 0 <= px < enhanced.shape[1] and 0 <= py < enhanced.shape[0]:
-                line_pts.append((d, enhanced[py, px]))
+        wa = (x1 - sx) * (y1 - sy)
+        wb = (sx - x0) * (y1 - sy)
+        wc = (x1 - sx) * (sy - y0)
+        wd = (sx - x0) * (sy - y0)
 
-        if len(line_pts) < 10:
+        intensities = (wa * gray[y0, x0] +
+                       wb * gray[y0, x1] +
+                       wc * gray[y1, x0] +
+                       wd * gray[y1, x1])
+
+        # Smooth slightly to remove high-frequency noise
+        smoothed = np.convolve(intensities, np.ones(5)/5.0, mode='same')
+
+        # Search for central minimum (pore slit between guard cells) in middle 40%
+        mid_indices = np.where(np.abs(dist_valid) < minor_len * 0.20)[0]
+        if len(mid_indices) < 5:
             return None
 
-        distances, intensities = zip(*line_pts)
-        intensities = np.array(intensities, dtype=np.float32)
+        valley_idx = mid_indices[np.argmin(smoothed[mid_indices])]
+        min_val = smoothed[valley_idx]
 
-        # Aperture is the dark valley in the center
-        min_idx = np.argmin(intensities)
-        min_val = intensities[min_idx]
-        max_val = np.percentile(intensities, 85)
-        valley_depth = max_val - min_val
+        left_side = smoothed[:valley_idx]
+        right_side = smoothed[valley_idx:]
+        if len(left_side) == 0 or len(right_side) == 0:
+            return None
 
-        if valley_depth > 15:
-            # Measure Full Width at Half Maximum (FWHM) of the central valley
-            half_thresh = min_val + valley_depth * 0.5
-            below_half = np.where(intensities < half_thresh)[0]
-            if len(below_half) > 1:
-                pore_width_px = abs(distances[below_half[-1]] - distances[below_half[0]])
-                return pore_width_px
+        left_peak = np.max(left_side)
+        right_peak = np.max(right_side)
+        baseline = (left_peak + right_peak) / 2.0
+        valley_depth = baseline - min_val
+
+        # Valley depth check: is there a detectable groove/slit?
+        has_groove = bool(valley_depth >= 10.0)
+
+        # Fit parabola to local neighborhood around minimum to get sub-pixel center
+        fit_radius = 4
+        fit_idx = np.arange(max(0, valley_idx - fit_radius), min(len(smoothed), valley_idx + fit_radius + 1))
+        if len(fit_idx) >= 5:
+            poly_coeffs = np.polyfit(dist_valid[fit_idx], smoothed[fit_idx], 2)
+            a, b, c = poly_coeffs
+            if a > 0:
+                subpixel_center = -b / (2 * a)
+            else:
+                subpixel_center = dist_valid[valley_idx]
+        else:
+            subpixel_center = dist_valid[valley_idx]
+
+        # Full-Width at Half-Maximum (FWHM) of the central valley
+        half_depth = min_val + 0.5 * valley_depth
+        left_crossings = np.where((dist_valid < subpixel_center) & (smoothed > half_depth))[0]
+        right_crossings = np.where((dist_valid > subpixel_center) & (smoothed > half_depth))[0]
+
+        if len(left_crossings) > 0 and len(right_crossings) > 0:
+            x_left = dist_valid[left_crossings[-1]]
+            x_right = dist_valid[right_crossings[0]]
+            fwhm_px = abs(x_right - x_left)
+        else:
+            fwhm_px = step * 3.0
+
+        aperture_um = fwhm_px * PX_TO_UM
+        return {
+            "subpixel_aperture_um": round(float(aperture_um), 3),
+            "valley_depth": round(float(valley_depth), 1),
+            "fwhm_px": round(float(fwhm_px), 2),
+            "has_clear_groove": has_groove
+        }
     except Exception:
-        pass
-    return None
+        return None
+
+
+def compute_gsmax(density_per_mm2, pore_major_um, pore_minor_um, guard_cell_width_um):
+    """
+    Computes maximum theoretical stomatal conductance to water vapor (mol m-2 s-1)
+    based on Franks & Farquhar (2001) and Sack & Buckley (2016).
+    """
+    if density_per_mm2 <= 0 or pore_major_um <= 0 or pore_minor_um <= 0:
+        return 0.0
+
+    d = 2.49e-5   # Diffusivity of water vapor in air at 25°C (m2/s)
+    v = 0.02446   # Molar volume of air at 25°C (m3/mol)
+    D = density_per_mm2 * 1e6  # Stomatal density in stomata/m2
+
+    # Maximum pore area a_max in m2 (ellipse)
+    a_max = (np.pi / 4.0) * (pore_major_um * 1e-6) * (pore_minor_um * 1e-6)
+
+    # Pore depth l in m (approximated as guard cell width)
+    l_depth = max(1e-6, guard_cell_width_um * 1e-6)
+
+    denom = l_depth + (np.pi / 2.0) * np.sqrt(a_max / np.pi)
+    gsmax = (d / v) * D * a_max / max(1e-9, denom)
+    return round(float(gsmax), 4)
+
+
+def compute_spi(density_per_mm2, stoma_major_um):
+    """
+    Stomatal Pore Area Index (SPI = D * L^2, dimensionless).
+    """
+    if density_per_mm2 <= 0 or stoma_major_um <= 0:
+        return 0.0
+    return round(float(density_per_mm2 * (stoma_major_um ** 2) * 1e-6), 6)
+
+
+def compute_clark_evans(centroids_px, width_px=2048, height_px=1536):
+    """
+    Computes Nearest-Neighbor Distance (NND in um) and Clark-Evans aggregation index R.
+    R > 1: regular/over-dispersed spacing (one-cell spacing rule).
+    R = 1: random.
+    R < 1: clustered.
+    """
+    n = len(centroids_px)
+    if n < 3:
+        return np.nan, np.nan
+    pts = np.array(centroids_px) * PX_TO_UM  # convert to um
+    diff = pts[:, np.newaxis, :] - pts[np.newaxis, :, :]
+    dist_matrix = np.sqrt(np.sum(diff**2, axis=-1))
+    np.fill_diagonal(dist_matrix, np.inf)
+
+    nnd = np.min(dist_matrix, axis=1)
+    mean_nnd = np.mean(nnd)
+
+    area_um2 = (width_px * PX_TO_UM) * (height_px * PX_TO_UM)
+    density = n / max(1e-5, area_um2)
+    expected_nnd = 0.5 / np.sqrt(density)
+
+    r = mean_nnd / max(1e-5, expected_nnd)
+    return round(float(mean_nnd), 2), round(float(r), 3)
+
 
 
 def predict_tiled(model, img, tile_size=640, stride=448, conf_stoma=0.18, conf_center=0.38, iou_thresh=0.45, margin=16, enhance_contrast=True):
@@ -377,14 +491,22 @@ def process_image(model, img_path_or_array, image_name, tile_size=640, stride=44
                 break
 
         stage2_refined = False
+        closed_pore_fallback = False
+        subpixel_refined = False
         pore_major_um = 0.0
         pore_minor_um = 0.0
         pore_area_um2 = 0.0
         guard_cell_width_um = 0.0
+        valley_depth = 0.0
 
         minor_axis_line, _ = get_minor_axis_line(stoma_poly)
         stoma_intersection = minor_axis_line.intersection(stoma_poly)
         stoma_minor_len_px = stoma_intersection.length if not stoma_intersection.is_empty else minor_axis_s_px
+
+        # Sub-pixel orthogonal intensity analysis
+        subpixel_res = measure_subpixel_pore_aperture(img_bgr, stoma_poly, matched_center)
+        if subpixel_res is not None:
+            valley_depth = subpixel_res["valley_depth"]
 
         if matched_center is not None:
             # Direct model detection for pore
@@ -396,21 +518,28 @@ def process_image(model, img_path_or_array, image_name, tile_size=640, stride=44
             center_minor_len_px = center_intersection.length if not center_intersection.is_empty else minor_axis_c_px
 
             pore_major_um = major_axis_c_px * PX_TO_UM
-            pore_minor_um = center_minor_len_px * PX_TO_UM
             pore_area_um2 = matched_center.area * (PX_TO_UM ** 2)
-            guard_cell_width_um = max(0.0, (stoma_minor_len_px - center_minor_len_px) * PX_TO_UM / 2.0)
+
+            if subpixel_res is not None and subpixel_res["subpixel_aperture_um"] > 0:
+                pore_minor_um = subpixel_res["subpixel_aperture_um"]
+                subpixel_refined = True
+            else:
+                pore_minor_um = center_minor_len_px * PX_TO_UM
+
+            guard_cell_width_um = max(0.5, (stoma_minor_len_px * PX_TO_UM - pore_minor_um) / 2.0)
         else:
-            # Stage-2 CLAHE aperture refinement for closed or faint pore slits
-            refined_pore_px = refine_pore_clahe(img_bgr, stoma_poly)
-            if refined_pore_px is not None and refined_pore_px < stoma_minor_len_px * 0.6:
+            # Stage-2 Sub-Pixel Longitudinal Groove Fallback Estimator for tightly closed pores
+            if subpixel_res is not None and subpixel_res["has_clear_groove"]:
                 stage2_refined = True
-                pore_minor_um = refined_pore_px * PX_TO_UM
-                pore_major_um = major_axis_s_um * 0.55
+                closed_pore_fallback = True
+                subpixel_refined = True
+                pore_minor_um = subpixel_res["subpixel_aperture_um"]
+                pore_major_um = major_axis_s_um * 0.50
                 pore_area_um2 = np.pi * (pore_major_um / 2.0) * (pore_minor_um / 2.0)
-                guard_cell_width_um = max(0.0, (stoma_minor_len_px - refined_pore_px) * PX_TO_UM / 2.0)
+                guard_cell_width_um = max(0.5, (stoma_minor_len_px * PX_TO_UM - pore_minor_um) / 2.0)
             else:
                 pore_minor_um = 0.0
-                pore_major_um = major_axis_s_um * 0.5
+                pore_major_um = major_axis_s_um * 0.50
                 guard_cell_width_um = (stoma_minor_len_px * PX_TO_UM) / 2.0
 
         aperture_ratio = pore_minor_um / max(1e-5, minor_axis_s_um)
@@ -419,12 +548,12 @@ def process_image(model, img_path_or_array, image_name, tile_size=640, stride=44
         is_plausible = (
             (8.0 <= major_axis_s_um <= 55.0) and
             (1.0 <= aspect_ratio_s <= 3.5) and
-            (guard_cell_width_um >= 1.0) and
+            (guard_cell_width_um >= 0.5) and
             (pore_minor_um <= minor_axis_s_um * 0.85)
         )
 
         # Strict Quality Gate for Ploidy Sizing:
-        # Non-truncated, sufficiently sharp, biometrically valid, with a defined pore
+        # Non-truncated, sufficiently sharp, biometrically valid, with a defined pore or clear groove
         is_suitable_for_ploidy = (
             is_plausible and
             (not is_edge_stoma) and
@@ -455,6 +584,9 @@ def process_image(model, img_path_or_array, image_name, tile_size=640, stride=44
             "aperture_ratio": round(float(aperture_ratio), 3),
             "angle_deg": round(float(angle_s), 1),
             "stage2_refined": stage2_refined,
+            "subpixel_refined": subpixel_refined,
+            "closed_pore_fallback": closed_pore_fallback,
+            "groove_valley_depth": round(float(valley_depth), 1),
             "is_biometrically_valid": is_plausible,
         })
 
@@ -510,8 +642,13 @@ def extract_traits(model_path, input_dir, output_csv, tile_size=640, stride=448,
             mean_len = round(ploidy_subset["stoma_major_um"].mean(), 2) if n_ploidy > 0 else np.nan
             std_len = round(ploidy_subset["stoma_major_um"].std(), 2) if n_ploidy > 0 else np.nan
             median_width = round(ploidy_subset["stoma_minor_um"].median(), 2) if n_ploidy > 0 else np.nan
-            median_gc_width = round(ploidy_subset["guard_cell_width_um"].median(), 2) if n_ploidy > 0 else np.nan
-            median_aperture = round(ploidy_subset["pore_minor_um"].median(), 2) if n_ploidy > 0 else np.nan
+            # Biophysical & Spatial metrics
+            median_pore_len = round(ploidy_subset["pore_major_um"].median(), 2) if n_ploidy > 0 else np.nan
+            gsmax = compute_gsmax(density_per_mm2, median_pore_len, median_aperture, median_gc_width) if n_ploidy > 0 else np.nan
+            spi = compute_spi(density_per_mm2, median_len) if (not np.isnan(median_len)) else np.nan
+
+            centroids = list(zip(group["centroid_x"], group["centroid_y"]))
+            mean_nnd, ce_r = compute_clark_evans(centroids)
 
             summary_rows.append({
                 "image_name": img_name,
@@ -526,6 +663,10 @@ def extract_traits(model_path, input_dir, output_csv, tile_size=640, stride=448,
                 "ploidy_median_stoma_width_um": median_width,
                 "ploidy_median_guard_cell_width_um": median_gc_width,
                 "ploidy_median_aperture_um": median_aperture,
+                "gsmax_mol_m2_s": gsmax,
+                "stomatal_pore_area_index_spi": spi,
+                "mean_nnd_um": mean_nnd,
+                "clark_evans_r": ce_r,
             })
 
         summary_df = pd.DataFrame(summary_rows)

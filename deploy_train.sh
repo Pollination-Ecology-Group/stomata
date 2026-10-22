@@ -11,6 +11,8 @@ echo "=== Deploying Stomata Retraining Job to CESNET Kubernetes ==="
 echo "[*] Updating ConfigMap: ${CONFIGMAP_NAME} in namespace ${NAMESPACE}..."
 kubectl create configmap "${CONFIGMAP_NAME}" \
   --from-file=train_stomata_s3.py=src/train_stomata_s3.py \
+  --from-file=run_stomata_full_inference.py=src/run_stomata_full_inference.py \
+  --from-file=extract_traits.py=src/extract_traits.py \
   -n "${NAMESPACE}" \
   --dry-run=client -o yaml | kubectl apply -f -
 

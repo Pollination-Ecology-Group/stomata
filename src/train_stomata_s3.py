@@ -21,6 +21,8 @@ import shutil
 import zipfile
 import random
 import yaml
+import smtplib
+from email.message import EmailMessage
 from datetime import datetime
 from pathlib import Path
 import boto3
@@ -72,6 +74,31 @@ def get_s3_client():
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         config=Config(s3={"addressing_style": "path"}, signature_version="s3v4"),
     )
+
+
+def send_email_notification(subject, body):
+    recipient = os.environ.get("EMAIL_RECIPIENT", "jakubstenc@gmail.com")
+    pw = os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "") if os.environ.get("GMAIL_APP_PASSWORD") else ""
+    if not pw:
+        print("[!] GMAIL_APP_PASSWORD not set. Skipping email dispatch.")
+        return False
+
+    msg = EmailMessage()
+    msg.set_content(body)
+    msg['Subject'] = subject
+    msg['From'] = recipient
+    msg['To'] = recipient
+
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=15)
+        server.login(recipient, pw)
+        server.send_message(msg)
+        server.quit()
+        print(f"[+] Email notification sent successfully to {recipient}")
+        return True
+    except Exception as e:
+        print(f"[-] Failed to send email: {e}")
+        return False
 
 
 def find_latest_staged_zip(s3_client):
@@ -320,6 +347,28 @@ def upload_results(s3_client, best_weights: Path, run_save_dir: Path):
     print(f"    Versioned model: s3://{S3_BUCKET}/{s3_key_versioned}")
     print(f"    Latest model:    s3://{S3_BUCKET}/{s3_key_latest}")
     print(f"    Run metrics:     s3://{S3_BUCKET}/{s3_run_prefix}")
+
+    # 4. Dispatch Email Notification
+    subject = f"✅ Stomata YOLO Retraining Completed: {versioned_model_name} (v7 + Backgrounds)"
+    email_body = f"""Hello Jakub,
+
+Your Stomata YOLO retraining run on the CESNET GPU cluster has completed successfully!
+
+🎯 Model Details:
+══════════════════════════════════════════════════════════════
+• Model Version: {versioned_model_name}
+• Base Architecture: {BASE_MODEL}
+• Training Epochs: {EPOCHS} (ImgSize: {IMG_SIZE})
+• Latest Model Pointer: s3://{S3_BUCKET}/{s3_key_latest}
+• Versioned Weights: s3://{S3_BUCKET}/{s3_key_versioned}
+• Run Metrics Directory: s3://{S3_BUCKET}/{s3_run_prefix}
+
+Full batch inference across all 3,253 micrographs will now execute using these new weights.
+
+Best regards,
+CESNET Automated Retraining Pipeline
+"""
+    send_email_notification(subject, email_body)
 
 
 def main():

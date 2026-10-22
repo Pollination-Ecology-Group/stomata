@@ -1,0 +1,214 @@
+---
+title: "Stomatal traits across cytotypes — short summary"
+subtitle: "Preliminary results from automated analysis of 3,253 micrographs"
+author: "Pollination Ecology Group"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  pdf:
+    documentclass: article
+    papersize: a4
+    fontsize: 10pt
+    pdf-engine: xelatex
+    mainfont: "Noto Sans"
+    monofont: "DejaVu Sans Mono"
+    geometry:
+      - margin=2cm
+    number-sections: false
+    colorlinks: true
+    fig-pos: "H"
+    include-in-header:
+      text: |
+        \usepackage{float}
+        \usepackage{booktabs}
+        \setlength{\parskip}{4pt}
+execute:
+  echo: false
+  warning: false
+  message: false
+knitr:
+  opts_chunk:
+    dev: "ragg_png"
+    dpi: 300
+---
+
+```{r setup}
+#| include: false
+suppressPackageStartupMessages({
+  library(dplyr); library(tidyr); library(ggplot2)
+  library(lme4); library(lmerTest); library(emmeans)
+  library(knitr); library(kableExtra)
+})
+emm_options(lmer.df = "asymptotic")  # consistent, fast CIs for large N
+
+theme_set(
+  theme_minimal(base_size = 10) +
+    theme(panel.grid.minor = element_blank(),
+          strip.text = element_text(face = "bold"),
+          strip.background = element_rect(fill = "#f3f4f6", colour = NA),
+          axis.title = element_text(face = "bold"))
+)
+cyt_cols <- c(ory_2x = "#3b82f6", nat_2x = "#10b981",
+              nat_4x = "#f59e0b", neo_4x = "#ef4444")
+
+df <- read.csv("data/stomata_traits_all_3253_image_summary.csv",
+               stringsAsFactors = FALSE) %>%
+  filter(!is.na(cytotype), !is.na(population), !is.na(plant_ID)) %>%
+  mutate(cytotype  = factor(cytotype, levels = names(cyt_cols)),
+         leaf_side = factor(leaf_side, levels = c("abaxial", "adaxial")),
+         population = factor(population), plant_ID = factor(plant_ID))
+
+traits <- c(length  = "ploidy_median_stoma_length_um",
+            density = "stomatal_density_per_mm2",
+            gsmax   = "gsmax_mol_m2_s")
+trait_lab <- c(length = "Stoma length (µm)",
+               density = "Density (mm⁻²)",
+               gsmax = "gsmax (mol m⁻² s⁻¹)")
+
+fit <- function(y) {
+  d <- df[!is.na(df[[y]]), ]
+  lmer(reformulate("cytotype * leaf_side + (1 | population) + (1 | population:plant_ID)",
+                   response = y), data = d)
+}
+models <- lapply(traits, fit)
+emms   <- lapply(models, function(m) emmeans(m, ~ cytotype | leaf_side))
+emm_df <- bind_rows(lapply(names(emms), function(t)
+  as.data.frame(emms[[t]]) %>% mutate(trait = t)))
+
+# helpers for inline numbers
+e <- function(t, cyt, side = "abaxial")
+  emm_df$emmean[emm_df$trait == t & emm_df$cytotype == cyt & emm_df$leaf_side == side]
+pct <- function(t, a, b = "nat_2x", side = "abaxial")
+  sprintf("%+.0f%%", 100 * (e(t, a, side) / e(t, b, side) - 1))
+f1 <- function(x) formatC(x, format = "f", digits = 1)
+f2 <- function(x) formatC(x, format = "f", digits = 2)
+
+n_img   <- nrow(df)
+n_plant <- n_distinct(df$plant_ID)
+n_pop   <- n_distinct(df$population)
+n_stom  <- sum(df$total_stomata_count, na.rm = TRUE)
+```
+
+## Summary
+
+We automatically detected and measured stomata in **`r format(n_img, big.mark = ",")` micrographs** from **`r n_plant` plants** (`r n_pop` populations; four cytotypes; both leaf sides), giving **`r format(n_stom, big.mark = ",")` detected stomata**. Key results:
+
+- **Cell size follows ploidy, but not linearly.** Synthetic neotetraploids (`neo_4x`) have the largest stomata (`r f1(e("length","neo_4x"))` µm abaxial, `r pct("length","neo_4x")` vs. `nat_2x`), while established natural tetraploids (`nat_4x`) are intermediate (`r f1(e("length","nat_4x"))` µm, `r pct("length","nat_4x")`). Diploids `ory_2x` and `nat_2x` are similar (`r f1(e("length","ory_2x"))` and `r f1(e("length","nat_2x"))` µm).
+- **Density compensates for size in neopolyploids.** Abaxial density drops from `r round(e("density","nat_2x"))` mm⁻² in `nat_2x` to `r round(e("density","neo_4x"))` mm⁻² in `neo_4x` (`r pct("density","neo_4x")`), whereas `nat_4x` (`r round(e("density","nat_4x"))` mm⁻², `r pct("density","nat_4x")`) does not differ significantly from `nat_2x`. `ory_2x` has the highest density (`r round(e("density","ory_2x"))` mm⁻²).
+- **Theoretical conductance.** Estimated $g_{s\max}$ is lowest in `neo_4x` (`r f2(e("gsmax","neo_4x"))` mol m⁻² s⁻¹ abaxial), while `nat_4x` (`r f2(e("gsmax","nat_4x"))`) matches `nat_2x` (`r f2(e("gsmax","nat_2x"))`); `ory_2x` is highest (`r f2(e("gsmax","ory_2x"))`). This is consistent with natural tetraploids having re-balanced size and density after polyploidisation, whereas neopolyploids have not.
+- **Leaf sides.** All cytotypes are amphistomatous, with consistently higher density on the abaxial surface.
+
+## Methods in brief
+
+**Image analysis.** A YOLO11 instance-segmentation model (classes: whole stoma, pore) was retrained with additional hard-negative background images and run tile-wise on full-resolution micrographs. For each stoma we measured length, width, guard-cell width and pore aperture; size statistics use only well-focused, non-edge stomata. Pore aperture is refined at sub-pixel resolution from intensity profiles across the pore. Density = all detected stomata / imaged leaf area.
+
+**Theoretical conductance** follows Franks & Farquhar (2001): $g_{s\max} = \frac{d}{v}\,\frac{D\,a_{\max}}{l + \frac{\pi}{2}\sqrt{a_{\max}/\pi}}$, with density $D$, pore area $a_{\max}$ (from pore length and aperture) and pore depth $l$ approximated by guard-cell width.
+
+**Statistics.** Each trait was analysed per micrograph with a linear mixed model, `trait ~ cytotype × leaf side + (1 | population) + (1 | population:plant)`, accounting for repeated images per plant. Means are model-estimated marginal means (EMMs); pairwise contrasts are Tukey-adjusted within leaf side.
+
+## Results
+
+```{r tbl-emm}
+#| tbl-cap: "Model-estimated marginal means per cytotype and leaf side."
+tab <- emm_df %>%
+  mutate(val = ifelse(trait == "gsmax", f2(emmean),
+                      ifelse(trait == "density", f1(emmean), f1(emmean))),
+         col = paste(leaf_side, trait, sep = "_")) %>%
+  select(cytotype, col, val) %>%
+  pivot_wider(names_from = col, values_from = val) %>%
+  select(cytotype, abaxial_length, abaxial_density, abaxial_gsmax,
+         adaxial_length, adaxial_density, adaxial_gsmax)
+
+kable(tab, format = "latex", booktabs = TRUE, align = "lcccccc",
+      col.names = c("Cytotype", "Length (µm)", "Density (mm⁻²)", "gsmax",
+                    "Length (µm)", "Density (mm⁻²)", "gsmax")) %>%
+  add_header_above(c(" " = 1, "Abaxial" = 3, "Adaxial" = 3)) %>%
+  kable_styling(latex_options = c("HOLD_position"), font_size = 9) %>%
+  footnote(general = "gsmax in mol m⁻² s⁻¹.", general_title = "")
+```
+
+```{r tbl-contrasts}
+#| tbl-cap: "Selected pairwise differences (row minus reference), Tukey-adjusted within leaf side. *** p < 0.001, ** p < 0.01, * p < 0.05, ns = not significant."
+keep <- c("nat_4x - nat_2x", "neo_4x - nat_2x", "neo_4x - nat_4x", "ory_2x - nat_2x")
+stars <- function(p) cut(p, c(-Inf, .001, .01, .05, Inf),
+                         labels = c("***", "**", "*", "ns"))
+con <- bind_rows(lapply(names(emms), function(t) {
+  cc <- as.data.frame(pairs(emms[[t]], reverse = TRUE, adjust = "tukey"))
+  # normalise contrast labels so that keep-list matches either direction
+  cc %>% mutate(trait = t)
+})) %>%
+  mutate(contrast = gsub("[()]", "", as.character(contrast)))
+
+# make sure every wanted contrast is present (flip sign if stored reversed)
+flip <- function(x) paste(rev(strsplit(x, " - ")[[1]]), collapse = " - ")
+con <- con %>%
+  mutate(rev_lab = vapply(contrast, flip, ""),
+         estimate = ifelse(contrast %in% keep, estimate, -estimate),
+         contrast = ifelse(contrast %in% keep, contrast, rev_lab)) %>%
+  filter(contrast %in% keep) %>%
+  mutate(val = paste0(ifelse(trait == "gsmax", sprintf("%+.2f", estimate),
+                             sprintf("%+.1f", estimate)), " ", stars(p.value)),
+         col = paste(leaf_side, trait, sep = "_")) %>%
+  select(contrast, col, val) %>%
+  pivot_wider(names_from = col, values_from = val) %>%
+  mutate(contrast = factor(contrast, levels = keep)) %>% arrange(contrast) %>%
+  select(contrast, abaxial_length, abaxial_density, abaxial_gsmax,
+         adaxial_length, adaxial_density, adaxial_gsmax)
+
+kable(con, format = "latex", booktabs = TRUE, align = "lcccccc",
+      col.names = c("Contrast", "Length", "Density", "gsmax",
+                    "Length", "Density", "gsmax")) %>%
+  add_header_above(c(" " = 1, "Abaxial" = 3, "Adaxial" = 3)) %>%
+  kable_styling(latex_options = c("HOLD_position"), font_size = 9)
+```
+
+```{r fig-traits}
+#| fig-cap: "Stoma length, stomatal density and theoretical maximum conductance per micrograph. Boxes show image-level distributions; white diamonds with bars show model EMMs ± 95% CI."
+#| fig-width: 7
+#| fig-height: 6.2
+long <- df %>%
+  select(cytotype, leaf_side, all_of(traits)) %>%
+  pivot_longer(all_of(names(traits)), names_to = "trait", values_to = "value") %>%
+  filter(!is.na(value)) %>%
+  mutate(trait = factor(trait, levels = names(traits), labels = trait_lab))
+emm_plot <- emm_df %>%
+  mutate(trait = factor(trait, levels = names(traits), labels = trait_lab))
+
+ggplot(long, aes(cytotype, value, fill = cytotype)) +
+  geom_boxplot(width = 0.55, alpha = 0.7, outlier.size = 0.4,
+               outlier.alpha = 0.3, colour = "#374151", linewidth = 0.3) +
+  geom_errorbar(data = emm_plot, inherit.aes = FALSE, width = 0.15,
+                aes(cytotype, ymin = asymp.LCL, ymax = asymp.UCL)) +
+  geom_point(data = emm_plot, inherit.aes = FALSE, aes(cytotype, emmean),
+             shape = 23, size = 2.4, fill = "white") +
+  facet_grid(trait ~ leaf_side, scales = "free_y", switch = "y") +
+  scale_fill_manual(values = cyt_cols, guide = "none") +
+  labs(x = NULL, y = NULL) +
+  theme(strip.placement = "outside")
+```
+
+```{r fig-tradeoff}
+#| fig-cap: "Size–density trade-off. Each point is a plant mean; lines are per-cytotype linear fits."
+#| fig-width: 7
+#| fig-height: 3.2
+pm <- df %>%
+  filter(!is.na(ploidy_median_stoma_length_um)) %>%
+  group_by(plant_ID, cytotype, leaf_side) %>%
+  summarise(len = mean(ploidy_median_stoma_length_um),
+            dens = mean(stomatal_density_per_mm2), .groups = "drop")
+ggplot(pm, aes(len, dens, colour = cytotype)) +
+  geom_point(alpha = 0.5, size = 1) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
+  facet_wrap(~ leaf_side) +
+  scale_colour_manual(values = cyt_cols) +
+  labs(x = "Mean stoma length (µm)", y = "Mean density (mm⁻²)", colour = NULL) +
+  theme(legend.position = "bottom")
+```
+
+## Caveats
+
+- Results are **preliminary**; measurements come from an automated pipeline and have not yet been fully validated against manual counts on an independent set.
+- $g_{s\max}$ is a *theoretical* anatomical estimate using guard-cell width as a proxy for pore depth and the imaged (not maximal) aperture; it is best used for relative comparisons among cytotypes, not as absolute conductance.
+- With only `r n_pop` populations, the population-level variance component is estimated imprecisely.
+
+*Full analysis with code, ANOVA tables and additional traits: `docs/analysis.html` (project website).*

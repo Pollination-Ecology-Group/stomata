@@ -27,13 +27,22 @@ spec:
             export HOME=/tmp
             export PATH=$PATH:$HOME/.local/bin
             echo "Installing required Python dependencies..."
-            pip install --user boto3 pyyaml albumentations --quiet
+            pip install --user boto3 pyyaml albumentations openpyxl shapely pandas --quiet
             echo "Configuring Ultralytics writable paths..."
             mkdir -p /tmp/stomata_train/weights /tmp/stomata_train/runs /tmp/stomata_train/datasets
             yolo settings weights_dir='/tmp/stomata_train/weights' runs_dir='/tmp/stomata_train/runs' datasets_dir='/tmp/stomata_train/datasets'
-            echo "Starting Stomata model training pipeline..."
+            
+            echo "============================================================"
+            echo "STEP 1: Retraining Stomata YOLOv11 Model (v7 + Backgrounds)"
+            echo "============================================================"
             cd /tmp/stomata_train
             python3 /scripts/train_stomata_s3.py
+
+            echo "============================================================"
+            echo "STEP 2: Full Batch Trait Extraction Across 3,253 Micrographs"
+            echo "============================================================"
+            cp /scripts/extract_traits.py /tmp/stomata_train/extract_traits.py
+            python3 /scripts/run_stomata_full_inference.py
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -41,6 +50,8 @@ spec:
         envFrom:
         - secretRef:
             name: s3-creds
+        - secretRef:
+            name: email-credentials
         env:
           - name: S3_ENDPOINT
             value: "https://s3.cl4.du.cesnet.cz"
@@ -66,14 +77,24 @@ spec:
             value: "30"
           - name: VAL_SPLIT
             value: "0.15"
+          - name: EMAIL_RECIPIENT
+            value: "jakubstenc@gmail.com"
+          - name: S3_META_KEY
+            value: "Ostatni/Stomata/metadata/stomata_sampling_trait_comparison_by_sample.xlsx"
+          - name: S3_OUTPUT_PREFIX
+            value: "Ostatni/Stomata/inference_results"
+          - name: FETCH_WORKERS
+            value: "16"
+          - name: MIN_FOCUS
+            value: "2.8"
         resources:
           requests:
-            memory: "16Gi"
-            cpu: "4"
+            memory: "4Gi"
+            cpu: "1"
             nvidia.com/gpu: "1"
           limits:
-            memory: "32Gi"
-            cpu: "8"
+            memory: "24Gi"
+            cpu: "4"
             nvidia.com/gpu: "1"
         volumeMounts:
         - name: dshm
@@ -86,10 +107,10 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
-          sizeLimit: 16Gi
+          sizeLimit: 8Gi
       - name: tmp-volume
         emptyDir:
-          sizeLimit: 50Gi
+          sizeLimit: 40Gi
       - name: script-volume
         configMap:
           name: stomata-train-script

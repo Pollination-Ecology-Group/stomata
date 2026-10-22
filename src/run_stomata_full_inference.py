@@ -32,7 +32,10 @@ from extract_traits import (
     PX_TO_UM,
     compute_focus_score,
     get_minor_axis_line,
-    refine_pore_clahe
+    measure_subpixel_pore_aperture,
+    compute_gsmax,
+    compute_spi,
+    compute_clark_evans
 )
 
 # ── Configuration ─────────────────────────────────────────────────────────────
@@ -212,6 +215,17 @@ def run_full_inference(limit=None):
             gc_widths = [r["guard_cell_width_um"] for r in ploidy_sub]
             apertures = [r["pore_minor_um"] for r in ploidy_sub]
 
+            median_len = round(float(np.median(lengths)), 2) if n_ploidy > 0 else np.nan
+            median_pore_len = round(float(np.median([r["pore_major_um"] for r in ploidy_sub])), 2) if n_ploidy > 0 else np.nan
+            median_aperture = round(float(np.median(apertures)), 2) if n_ploidy > 0 else np.nan
+            median_gc_width = round(float(np.median(gc_widths)), 2) if n_ploidy > 0 else np.nan
+
+            gsmax = compute_gsmax(density, median_pore_len, median_aperture, median_gc_width) if n_ploidy > 0 else np.nan
+            spi = compute_spi(density, median_len) if (not np.isnan(median_len)) else np.nan
+
+            centroids = [(r["centroid_x"], r["centroid_y"]) for r in stoma_res]
+            mean_nnd, ce_r = compute_clark_evans(centroids)
+
             summary_records.append({
                 "image_name": img_name,
                 "plant_ID": row_meta.get("plant_ID"),
@@ -229,12 +243,16 @@ def run_full_inference(limit=None):
                 "edge_stomata_count": edge_count,
                 "blurred_stomata_count": blur_count,
                 "ploidy_sample_count": n_ploidy,
-                "ploidy_median_stoma_length_um": round(float(np.median(lengths)), 2) if n_ploidy > 0 else np.nan,
+                "ploidy_median_stoma_length_um": median_len,
                 "ploidy_mean_stoma_length_um": round(float(np.mean(lengths)), 2) if n_ploidy > 0 else np.nan,
                 "ploidy_stoma_length_std_um": round(float(np.std(lengths)), 2) if n_ploidy > 0 else np.nan,
                 "ploidy_median_stoma_width_um": round(float(np.median(widths)), 2) if n_ploidy > 0 else np.nan,
-                "ploidy_median_guard_cell_width_um": round(float(np.median(gc_widths)), 2) if n_ploidy > 0 else np.nan,
-                "ploidy_median_aperture_um": round(float(np.median(apertures)), 2) if n_ploidy > 0 else np.nan,
+                "ploidy_median_guard_cell_width_um": median_gc_width,
+                "ploidy_median_aperture_um": median_aperture,
+                "gsmax_mol_m2_s": gsmax,
+                "stomatal_pore_area_index_spi": spi,
+                "mean_nnd_um": mean_nnd,
+                "clark_evans_r": ce_r,
             })
 
         elapsed = time.time() - start_time
