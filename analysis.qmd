@@ -283,7 +283,7 @@ ggplot(df, aes(x = cytotype, y = stomatal_density_per_mm2, fill = cytotype)) +
 ::: {.callout-note}
 ### Key Biological Insights on Stomatal Density
 1. **Strong Size–Density Compensation:** As cell size increases from diploid to tetraploid, stomatal density drops sharply ($F = 58.4, p < 2.2 \times 10^{-16}$). `neo_4x` has the lowest density ($157.1$ on abaxial, $133.0$ on adaxial), whereas `ory_2x` and `nat_2x` reach $240 - 280$ stomata/mm².
-2. **Surface Specialization (Amphistomy):** All cytotypes exhibit amphistomatous leaves with consistently higher stomatal density on the lower (abaxial) surface than the upper (adaxial) surface ($F = 573.6, p < 2.2 \times 10^{-16}$).
+2. **Surface Specialization (Stomata on Both Surfaces):** All cytotypes produce functional stomata on both the upper and lower leaf surfaces, with consistently higher stomatal density on the lower (abaxial) surface than the upper (adaxial) surface ($F = 573.6, p < 2.2 \times 10^{-16}$).
 :::
 
 ---
@@ -364,7 +364,7 @@ ggplot(df %>% filter(!is.na(aspect_ratio)), aes(x = cytotype, y = aspect_ratio, 
 
 ---
 
-## 5. Amphistomy Ratio Across Cytotypes
+## 5. Upper vs. Lower Leaf Surface Density Ratio Across Cytotypes
 
 Does genome duplication alter the relative partitioning of stomata between the upper and lower leaf surfaces?
 
@@ -377,17 +377,17 @@ amph_df <- df %>%
   filter(!is.na(abaxial), !is.na(adaxial), abaxial > 0) %>%
   mutate(adaxial_ratio = adaxial / (abaxial + adaxial), ratio_ad_ab = adaxial / abaxial)
 
-# Mixed model for amphistomy ratio
+# Mixed model for surface ratio
 m_amph <- lmer(ratio_ad_ab ~ cytotype + (1 | population), data = amph_df)
 anova_amph <- anova(m_amph)
-kable(round(as.data.frame(anova_amph), 3), caption = "ANOVA for Adaxial / Abaxial Density Ratio") %>%
+kable(round(as.data.frame(anova_amph), 3), caption = "ANOVA for Upper / Lower Surface (Adaxial / Abaxial) Density Ratio") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
 ```{r fig-amphistomy}
 #| fig-width: 8
 #| fig-height: 4.8
-#| fig-cap: "Distribution of adaxial to abaxial stomatal density ratio per plant across cytotypes."
+#| fig-cap: "Distribution of upper-to-lower (adaxial to abaxial) stomatal density ratio per plant across cytotypes."
 
 ggplot(amph_df, aes(x = cytotype, y = ratio_ad_ab, fill = cytotype)) +
   geom_hline(yintercept = 1.0, linetype = "dashed", color = "#6b7280", linewidth = 0.8) +
@@ -395,7 +395,7 @@ ggplot(amph_df, aes(x = cytotype, y = ratio_ad_ab, fill = cytotype)) +
   scale_fill_manual(values = cytotype_colors) +
   coord_cartesian(ylim = c(0.4, 1.4)) +
   labs(
-    title = "Amphistomy Balance (Adaxial / Abaxial Density Ratio)",
+    title = "Upper vs. Lower Leaf Surface Balance (Adaxial / Abaxial Density Ratio)",
     subtitle = "Dashed line at 1.0 denotes equal stomatal allocation on both surfaces",
     x = "Cytotype",
     y = "Ratio (Adaxial / Abaxial Density)"

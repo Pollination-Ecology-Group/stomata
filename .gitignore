@@ -15,3 +15,5 @@ example_field.png
 
 /.quarto/
 **/*.quarto_ipynb
+.credentials
+*.zip

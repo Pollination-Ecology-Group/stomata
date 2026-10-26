@@ -9,6 +9,8 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: review_app.qmd
+        text: QC Review App
       - href: measurements.qmd
         text: Measurements
       - href: pipeline.qmd

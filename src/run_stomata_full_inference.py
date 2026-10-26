@@ -220,7 +220,8 @@ def run_full_inference(limit=None):
             median_aperture = round(float(np.median(apertures)), 2) if n_ploidy > 0 else np.nan
             median_gc_width = round(float(np.median(gc_widths)), 2) if n_ploidy > 0 else np.nan
 
-            gsmax = compute_gsmax(density, median_pore_len, median_aperture, median_gc_width) if n_ploidy > 0 else np.nan
+            gsmax_theor = compute_gsmax(density, median_pore_len, median_aperture, median_gc_width, use_theoretical_aperture=True) if n_ploidy > 0 else np.nan
+            gsmax_oper = compute_gsmax(density, median_pore_len, median_aperture, median_gc_width, use_theoretical_aperture=False) if n_ploidy > 0 else np.nan
             spi = compute_spi(density, median_len) if (not np.isnan(median_len)) else np.nan
 
             centroids = [(r["centroid_x"], r["centroid_y"]) for r in stoma_res]
@@ -249,7 +250,8 @@ def run_full_inference(limit=None):
                 "ploidy_median_stoma_width_um": round(float(np.median(widths)), 2) if n_ploidy > 0 else np.nan,
                 "ploidy_median_guard_cell_width_um": median_gc_width,
                 "ploidy_median_aperture_um": median_aperture,
-                "gsmax_mol_m2_s": gsmax,
+                "gsmax_mol_m2_s": gsmax_theor,
+                "gsmax_operational_mol_m2_s": gsmax_oper,
                 "stomatal_pore_area_index_spi": spi,
                 "mean_nnd_um": mean_nnd,
                 "clark_evans_r": ce_r,

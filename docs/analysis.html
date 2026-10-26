@@ -334,6 +334,10 @@ window.Quarto = {
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./review_app.html"> 
+<span class="menu-text">QC Review App</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./measurements.html"> 
 <span class="menu-text">Measurements</span></a>
   </li>  
@@ -393,7 +397,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#stoma-shape-aspect-ratio" id="toc-stoma-shape-aspect-ratio" class="nav-link" data-scroll-target="#stoma-shape-aspect-ratio">Stoma Shape (Aspect Ratio)</a></li>
   </ul></li>
-  <li><a href="#amphistomy-ratio-across-cytotypes" id="toc-amphistomy-ratio-across-cytotypes" class="nav-link" data-scroll-target="#amphistomy-ratio-across-cytotypes">5. Amphistomy Ratio Across Cytotypes</a></li>
+  <li><a href="#upper-vs.-lower-leaf-surface-density-ratio-across-cytotypes" id="toc-upper-vs.-lower-leaf-surface-density-ratio-across-cytotypes" class="nav-link" data-scroll-target="#upper-vs.-lower-leaf-surface-density-ratio-across-cytotypes">5. Upper vs.&nbsp;Lower Leaf Surface Density Ratio Across Cytotypes</a></li>
   <li><a href="#biophysical-traits-maximum-stomatal-conductance-g_smax-stomatal-pore-area-index-spi" id="toc-biophysical-traits-maximum-stomatal-conductance-g_smax-stomatal-pore-area-index-spi" class="nav-link" data-scroll-target="#biophysical-traits-maximum-stomatal-conductance-g_smax-stomatal-pore-area-index-spi">6. Biophysical Traits: Maximum Stomatal Conductance (<span class="math inline">\(g_{s\max}\)</span>) &amp; Stomatal Pore Area Index (SPI)</a>
   <ul class="collapse">
   <li><a href="#mixed-model-fit-for-g_smax" id="toc-mixed-model-fit-for-g_smax" class="nav-link" data-scroll-target="#mixed-model-fit-for-g_smax">Mixed Model Fit for <span class="math inline">\(g_{s\max}\)</span></a></li>
@@ -686,29 +690,29 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">cytotype</td>
-<td style="text-align: right;">948.788</td>
-<td style="text-align: right;">316.263</td>
+<td style="text-align: right;">996.926</td>
+<td style="text-align: right;">332.309</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">510.101</td>
-<td style="text-align: right;">273.435</td>
+<td style="text-align: right;">510.518</td>
+<td style="text-align: right;">273.126</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">leaf_side</td>
-<td style="text-align: right;">261.185</td>
-<td style="text-align: right;">261.185</td>
+<td style="text-align: right;">275.088</td>
+<td style="text-align: right;">275.088</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">2445.511</td>
-<td style="text-align: right;">225.816</td>
+<td style="text-align: right;">2436.609</td>
+<td style="text-align: right;">226.097</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">cytotype:leaf_side</td>
-<td style="text-align: right;">22.652</td>
-<td style="text-align: right;">7.551</td>
+<td style="text-align: right;">27.748</td>
+<td style="text-align: right;">9.249</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">2445.773</td>
-<td style="text-align: right;">6.528</td>
+<td style="text-align: right;">2436.802</td>
+<td style="text-align: right;">7.602</td>
 <td style="text-align: right;">0</td>
 </tr>
 </tbody>
@@ -748,74 +752,74 @@ window.Quarto = {
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">18.53</td>
-<td style="text-align: right;">0.67</td>
-<td style="text-align: right;">4.85</td>
-<td style="text-align: right;">16.78</td>
-<td style="text-align: right;">20.27</td>
+<td style="text-align: right;">18.56</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">4.81</td>
+<td style="text-align: right;">16.77</td>
+<td style="text-align: right;">20.36</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">18.75</td>
-<td style="text-align: right;">0.66</td>
-<td style="text-align: right;">4.53</td>
+<td style="text-align: right;">18.80</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">4.51</td>
 <td style="text-align: right;">16.99</td>
-<td style="text-align: right;">20.50</td>
+<td style="text-align: right;">20.61</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">20.62</td>
-<td style="text-align: right;">0.66</td>
-<td style="text-align: right;">4.44</td>
-<td style="text-align: right;">18.86</td>
-<td style="text-align: right;">22.38</td>
+<td style="text-align: right;">20.59</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">4.42</td>
+<td style="text-align: right;">18.78</td>
+<td style="text-align: right;">22.40</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">23.86</td>
-<td style="text-align: right;">0.66</td>
-<td style="text-align: right;">4.54</td>
-<td style="text-align: right;">22.11</td>
-<td style="text-align: right;">25.62</td>
+<td style="text-align: right;">23.92</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">4.51</td>
+<td style="text-align: right;">22.12</td>
+<td style="text-align: right;">25.73</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">19.04</td>
-<td style="text-align: right;">0.67</td>
-<td style="text-align: right;">4.85</td>
-<td style="text-align: right;">17.30</td>
-<td style="text-align: right;">20.79</td>
+<td style="text-align: right;">19.06</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">4.81</td>
+<td style="text-align: right;">17.27</td>
+<td style="text-align: right;">20.86</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">19.13</td>
-<td style="text-align: right;">0.66</td>
-<td style="text-align: right;">4.53</td>
+<td style="text-align: right;">19.19</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">4.50</td>
 <td style="text-align: right;">17.38</td>
-<td style="text-align: right;">20.89</td>
+<td style="text-align: right;">21.00</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">21.40</td>
-<td style="text-align: right;">0.66</td>
-<td style="text-align: right;">4.43</td>
-<td style="text-align: right;">19.64</td>
-<td style="text-align: right;">23.16</td>
+<td style="text-align: right;">21.43</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">4.42</td>
+<td style="text-align: right;">19.62</td>
+<td style="text-align: right;">23.24</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">24.64</td>
-<td style="text-align: right;">0.66</td>
-<td style="text-align: right;">4.53</td>
-<td style="text-align: right;">22.88</td>
-<td style="text-align: right;">26.39</td>
+<td style="text-align: right;">24.71</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">4.51</td>
+<td style="text-align: right;">22.91</td>
+<td style="text-align: right;">26.52</td>
 </tr>
 </tbody>
 </table>
@@ -852,109 +856,109 @@ window.Quarto = {
 <tr class="odd">
 <td style="text-align: left;">ory_2x - nat_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">-0.221</td>
-<td style="text-align: right;">0.247</td>
-<td style="text-align: right;">592.841</td>
-<td style="text-align: right;">-0.893</td>
-<td style="text-align: right;">0.808</td>
+<td style="text-align: right;">-0.238</td>
+<td style="text-align: right;">0.249</td>
+<td style="text-align: right;">596.236</td>
+<td style="text-align: right;">-0.956</td>
+<td style="text-align: right;">0.774</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ory_2x - nat_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">-2.093</td>
-<td style="text-align: right;">0.345</td>
-<td style="text-align: right;">514.088</td>
-<td style="text-align: right;">-6.075</td>
+<td style="text-align: right;">-2.028</td>
+<td style="text-align: right;">0.346</td>
+<td style="text-align: right;">519.506</td>
+<td style="text-align: right;">-5.861</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ory_2x - neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">-5.339</td>
-<td style="text-align: right;">0.248</td>
-<td style="text-align: right;">596.095</td>
-<td style="text-align: right;">-21.530</td>
+<td style="text-align: right;">-5.361</td>
+<td style="text-align: right;">0.249</td>
+<td style="text-align: right;">600.359</td>
+<td style="text-align: right;">-21.494</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x - nat_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">-1.872</td>
-<td style="text-align: right;">0.322</td>
-<td style="text-align: right;">493.883</td>
-<td style="text-align: right;">-5.820</td>
+<td style="text-align: right;">-1.791</td>
+<td style="text-align: right;">0.323</td>
+<td style="text-align: right;">500.321</td>
+<td style="text-align: right;">-5.542</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_2x - neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">-5.118</td>
-<td style="text-align: right;">0.215</td>
-<td style="text-align: right;">600.995</td>
-<td style="text-align: right;">-23.794</td>
+<td style="text-align: right;">-5.123</td>
+<td style="text-align: right;">0.216</td>
+<td style="text-align: right;">605.917</td>
+<td style="text-align: right;">-23.672</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_4x - neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">-3.246</td>
-<td style="text-align: right;">0.322</td>
-<td style="text-align: right;">495.224</td>
-<td style="text-align: right;">-10.083</td>
+<td style="text-align: right;">-3.332</td>
+<td style="text-align: right;">0.323</td>
+<td style="text-align: right;">501.940</td>
+<td style="text-align: right;">-10.307</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ory_2x - nat_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">-0.089</td>
-<td style="text-align: right;">0.247</td>
-<td style="text-align: right;">587.886</td>
-<td style="text-align: right;">-0.361</td>
-<td style="text-align: right;">0.984</td>
+<td style="text-align: right;">-0.126</td>
+<td style="text-align: right;">0.248</td>
+<td style="text-align: right;">589.486</td>
+<td style="text-align: right;">-0.510</td>
+<td style="text-align: right;">0.957</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ory_2x - nat_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">-2.357</td>
-<td style="text-align: right;">0.345</td>
-<td style="text-align: right;">513.671</td>
-<td style="text-align: right;">-6.840</td>
+<td style="text-align: right;">-2.369</td>
+<td style="text-align: right;">0.346</td>
+<td style="text-align: right;">518.519</td>
+<td style="text-align: right;">-6.848</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ory_2x - neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">-5.597</td>
-<td style="text-align: right;">0.248</td>
-<td style="text-align: right;">593.597</td>
-<td style="text-align: right;">-22.603</td>
+<td style="text-align: right;">-5.647</td>
+<td style="text-align: right;">0.249</td>
+<td style="text-align: right;">595.730</td>
+<td style="text-align: right;">-22.696</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x - nat_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">-2.268</td>
-<td style="text-align: right;">0.322</td>
-<td style="text-align: right;">492.122</td>
-<td style="text-align: right;">-7.053</td>
+<td style="text-align: right;">-2.243</td>
+<td style="text-align: right;">0.323</td>
+<td style="text-align: right;">498.530</td>
+<td style="text-align: right;">-6.947</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_2x - neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">-5.508</td>
-<td style="text-align: right;">0.214</td>
-<td style="text-align: right;">593.284</td>
-<td style="text-align: right;">-25.707</td>
+<td style="text-align: right;">-5.521</td>
+<td style="text-align: right;">0.215</td>
+<td style="text-align: right;">597.194</td>
+<td style="text-align: right;">-25.623</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_4x - neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">-3.241</td>
-<td style="text-align: right;">0.322</td>
-<td style="text-align: right;">494.493</td>
-<td style="text-align: right;">-10.069</td>
+<td style="text-align: right;">-3.278</td>
+<td style="text-align: right;">0.323</td>
+<td style="text-align: right;">501.051</td>
+<td style="text-align: right;">-10.142</td>
 <td style="text-align: right;">0.000</td>
 </tr>
 </tbody>
@@ -1059,29 +1063,29 @@ Figure&nbsp;1: Distribution of stoma length across cytotypes and leaf sides. Poi
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">cytotype</td>
-<td style="text-align: right;">298613.1</td>
-<td style="text-align: right;">99537.71</td>
+<td style="text-align: right;">306506.8</td>
+<td style="text-align: right;">102168.94</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">494.787</td>
-<td style="text-align: right;">60.824</td>
+<td style="text-align: right;">494.646</td>
+<td style="text-align: right;">61.351</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">leaf_side</td>
-<td style="text-align: right;">1099927.5</td>
-<td style="text-align: right;">1099927.48</td>
+<td style="text-align: right;">1135478.1</td>
+<td style="text-align: right;">1135478.07</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">2710.966</td>
-<td style="text-align: right;">672.125</td>
+<td style="text-align: right;">2711.037</td>
+<td style="text-align: right;">681.834</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">cytotype:leaf_side</td>
-<td style="text-align: right;">113290.3</td>
-<td style="text-align: right;">37763.43</td>
+<td style="text-align: right;">109781.6</td>
+<td style="text-align: right;">36593.87</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">2710.832</td>
-<td style="text-align: right;">23.076</td>
+<td style="text-align: right;">2710.900</td>
+<td style="text-align: right;">21.974</td>
 <td style="text-align: right;">0</td>
 </tr>
 </tbody>
@@ -1121,74 +1125,74 @@ Figure&nbsp;1: Distribution of stoma length across cytotypes and leaf sides. Poi
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">296.9</td>
+<td style="text-align: right;">294.6</td>
 <td style="text-align: right;">21.5</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">254.8</td>
-<td style="text-align: right;">339.1</td>
+<td style="text-align: right;">252.5</td>
+<td style="text-align: right;">336.6</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">254.4</td>
+<td style="text-align: right;">252.5</td>
 <td style="text-align: right;">20.9</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">213.3</td>
-<td style="text-align: right;">295.4</td>
+<td style="text-align: right;">211.6</td>
+<td style="text-align: right;">293.5</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">236.9</td>
-<td style="text-align: right;">20.8</td>
+<td style="text-align: right;">234.8</td>
+<td style="text-align: right;">20.7</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">196.2</td>
-<td style="text-align: right;">277.6</td>
+<td style="text-align: right;">194.2</td>
+<td style="text-align: right;">275.4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">164.2</td>
+<td style="text-align: right;">161.9</td>
 <td style="text-align: right;">20.9</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">123.1</td>
-<td style="text-align: right;">205.2</td>
+<td style="text-align: right;">121.0</td>
+<td style="text-align: right;">202.9</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">243.0</td>
+<td style="text-align: right;">240.8</td>
 <td style="text-align: right;">21.5</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">200.9</td>
-<td style="text-align: right;">285.2</td>
+<td style="text-align: right;">198.7</td>
+<td style="text-align: right;">282.8</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">208.3</td>
+<td style="text-align: right;">205.5</td>
 <td style="text-align: right;">20.9</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">167.2</td>
-<td style="text-align: right;">249.3</td>
+<td style="text-align: right;">164.6</td>
+<td style="text-align: right;">246.4</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">211.7</td>
-<td style="text-align: right;">20.8</td>
+<td style="text-align: right;">208.8</td>
+<td style="text-align: right;">20.7</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">171.0</td>
-<td style="text-align: right;">252.4</td>
+<td style="text-align: right;">168.2</td>
+<td style="text-align: right;">249.4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">138.0</td>
+<td style="text-align: right;">135.0</td>
 <td style="text-align: right;">20.9</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">96.9</td>
-<td style="text-align: right;">179.0</td>
+<td style="text-align: right;">94.0</td>
+<td style="text-align: right;">175.9</td>
 </tr>
 </tbody>
 </table>
@@ -1250,7 +1254,7 @@ Figure&nbsp;2: Stomatal density across cytotypes and leaf sides. Diamonds and er
 <div class="callout-body-container callout-body">
 <ol type="1">
 <li><strong>Strong Size–Density Compensation:</strong> As cell size increases from diploid to tetraploid, stomatal density drops sharply (<span class="math inline">\(F = 58.4, p &lt; 2.2 \times 10^{-16}\)</span>). <code>neo_4x</code> has the lowest density (<span class="math inline">\(157.1\)</span> on abaxial, <span class="math inline">\(133.0\)</span> on adaxial), whereas <code>ory_2x</code> and <code>nat_2x</code> reach <span class="math inline">\(240 - 280\)</span> stomata/mm².</li>
-<li><strong>Surface Specialization (Amphistomy):</strong> All cytotypes exhibit amphistomatous leaves with consistently higher stomatal density on the lower (abaxial) surface than the upper (adaxial) surface (<span class="math inline">\(F = 573.6, p &lt; 2.2 \times 10^{-16}\)</span>).</li>
+<li><strong>Surface Specialization (Stomata on Both Surfaces):</strong> All cytotypes produce functional stomata on both the upper and lower leaf surfaces, with consistently higher stomatal density on the lower (abaxial) surface than the upper (adaxial) surface (<span class="math inline">\(F = 573.6, p &lt; 2.2 \times 10^{-16}\)</span>).</li>
 </ol>
 </div>
 </div>
@@ -1339,65 +1343,65 @@ Figure&nbsp;3: Negative scaling trade-off between stoma length (cell size) and s
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: left;">16.5 ± 1.38</td>
-<td style="text-align: left;">5.5 ± 0.33</td>
-<td style="text-align: left;">5.39 ± 0.89</td>
+<td style="text-align: left;">16.59 ± 1.34</td>
+<td style="text-align: left;">7.12 ± 0.68</td>
+<td style="text-align: left;">2.08 ± 0.54</td>
 <td style="text-align: left;">1.15 ± 0.08</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: left;">16.64 ± 1.41</td>
-<td style="text-align: left;">5.55 ± 0.39</td>
-<td style="text-align: left;">5.37 ± 0.84</td>
-<td style="text-align: left;">1.17 ± 0.1</td>
+<td style="text-align: left;">16.74 ± 1.41</td>
+<td style="text-align: left;">7.12 ± 0.77</td>
+<td style="text-align: left;">2.23 ± 0.6</td>
+<td style="text-align: left;">1.16 ± 0.1</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: left;">16.77 ± 1.19</td>
-<td style="text-align: left;">5.61 ± 0.33</td>
-<td style="text-align: left;">5.42 ± 0.72</td>
+<td style="text-align: left;">16.89 ± 1.17</td>
+<td style="text-align: left;">7.22 ± 0.66</td>
+<td style="text-align: left;">2.19 ± 0.63</td>
 <td style="text-align: left;">1.14 ± 0.07</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: left;">16.9 ± 1.15</td>
-<td style="text-align: left;">5.67 ± 0.38</td>
-<td style="text-align: left;">5.4 ± 0.68</td>
-<td style="text-align: left;">1.16 ± 0.09</td>
+<td style="text-align: left;">17.03 ± 1.11</td>
+<td style="text-align: left;">7.22 ± 0.62</td>
+<td style="text-align: left;">2.33 ± 0.62</td>
+<td style="text-align: left;">1.15 ± 0.09</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: left;">18.09 ± 1.42</td>
-<td style="text-align: left;">6.04 ± 0.43</td>
-<td style="text-align: left;">5.87 ± 0.78</td>
-<td style="text-align: left;">1.16 ± 0.08</td>
+<td style="text-align: left;">18.19 ± 1.44</td>
+<td style="text-align: left;">7.84 ± 0.85</td>
+<td style="text-align: left;">2.17 ± 0.67</td>
+<td style="text-align: left;">1.15 ± 0.08</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: left;">18.43 ± 1.25</td>
-<td style="text-align: left;">6.11 ± 0.42</td>
-<td style="text-align: left;">6.09 ± 0.77</td>
+<td style="text-align: left;">18.54 ± 1.28</td>
+<td style="text-align: left;">7.98 ± 0.78</td>
+<td style="text-align: left;">2.32 ± 0.78</td>
 <td style="text-align: left;">1.17 ± 0.1</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: left;">20.27 ± 1.49</td>
-<td style="text-align: left;">6.59 ± 0.52</td>
-<td style="text-align: left;">6.89 ± 0.98</td>
+<td style="text-align: left;">20.4 ± 1.38</td>
+<td style="text-align: left;">8.94 ± 0.86</td>
+<td style="text-align: left;">2.11 ± 0.85</td>
 <td style="text-align: left;">1.21 ± 0.09</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: left;">20.39 ± 1.47</td>
-<td style="text-align: left;">6.64 ± 0.52</td>
-<td style="text-align: left;">6.93 ± 0.93</td>
+<td style="text-align: left;">20.49 ± 1.45</td>
+<td style="text-align: left;">8.87 ± 0.99</td>
+<td style="text-align: left;">2.44 ± 1.16</td>
 <td style="text-align: left;">1.24 ± 0.11</td>
 </tr>
 </tbody>
@@ -1438,8 +1442,8 @@ Figure&nbsp;4: Stoma aspect ratio (length / width) across cytotypes.
 <hr>
 </section>
 </section>
-<section id="amphistomy-ratio-across-cytotypes" class="level2">
-<h2 class="anchored" data-anchor-id="amphistomy-ratio-across-cytotypes">5. Amphistomy Ratio Across Cytotypes</h2>
+<section id="upper-vs.-lower-leaf-surface-density-ratio-across-cytotypes" class="level2">
+<h2 class="anchored" data-anchor-id="upper-vs.-lower-leaf-surface-density-ratio-across-cytotypes">5. Upper vs.&nbsp;Lower Leaf Surface Density Ratio Across Cytotypes</h2>
 <p>Does genome duplication alter the relative partitioning of stomata between the upper and lower leaf surfaces?</p>
 <div class="cell">
 <details open="" class="code-fold">
@@ -1452,15 +1456,15 @@ Figure&nbsp;4: Stoma aspect ratio (length / width) across cytotypes.
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(abaxial), <span class="sc">!</span><span class="fu">is.na</span>(adaxial), abaxial <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">adaxial_ratio =</span> adaxial <span class="sc">/</span> (abaxial <span class="sc">+</span> adaxial), <span class="at">ratio_ad_ab =</span> adaxial <span class="sc">/</span> abaxial)</span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Mixed model for amphistomy ratio</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Mixed model for surface ratio</span></span>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>m_amph <span class="ot">&lt;-</span> <span class="fu">lmer</span>(ratio_ad_ab <span class="sc">~</span> cytotype <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> population), <span class="at">data =</span> amph_df)</span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>anova_amph <span class="ot">&lt;-</span> <span class="fu">anova</span>(m_amph)</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">round</span>(<span class="fu">as.data.frame</span>(anova_amph), <span class="dv">3</span>), <span class="at">caption =</span> <span class="st">"ANOVA for Adaxial / Abaxial Density Ratio"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">round</span>(<span class="fu">as.data.frame</span>(anova_amph), <span class="dv">3</span>), <span class="at">caption =</span> <span class="st">"ANOVA for Upper / Lower Surface (Adaxial / Abaxial) Density Ratio"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>, <span class="st">"condensed"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="table table-striped table-hover table-condensed caption-top table-sm small">
-<caption>ANOVA for Adaxial / Abaxial Density Ratio</caption>
+<caption>ANOVA for Upper / Lower Surface (Adaxial / Abaxial) Density Ratio</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;" data-quarto-table-cell-role="th"></th>
@@ -1475,12 +1479,12 @@ Figure&nbsp;4: Stoma aspect ratio (length / width) across cytotypes.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">cytotype</td>
-<td style="text-align: right;">0.134</td>
-<td style="text-align: right;">0.045</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">0.03</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">491.826</td>
-<td style="text-align: right;">0.898</td>
-<td style="text-align: right;">0.442</td>
+<td style="text-align: right;">484.489</td>
+<td style="text-align: right;">0.565</td>
+<td style="text-align: right;">0.638</td>
 </tr>
 </tbody>
 </table>
@@ -1495,7 +1499,7 @@ Figure&nbsp;4: Stoma aspect ratio (length / width) across cytotypes.
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> cytotype_colors) <span class="sc">+</span></span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">1.4</span>)) <span class="sc">+</span></span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Amphistomy Balance (Adaxial / Abaxial Density Ratio)"</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Upper vs. Lower Leaf Surface Balance (Adaxial / Abaxial Density Ratio)"</span>,</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Dashed line at 1.0 denotes equal stomatal allocation on both surfaces"</span>,</span>
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Cytotype"</span>,</span>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Ratio (Adaxial / Abaxial Density)"</span></span>
@@ -1509,7 +1513,7 @@ Figure&nbsp;4: Stoma aspect ratio (length / width) across cytotypes.
 <img src="analysis_files/figure-html/fig-amphistomy-1.png" class="img-fluid figure-img" width="768">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-amphistomy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5: Distribution of adaxial to abaxial stomatal density ratio per plant across cytotypes.
+Figure&nbsp;5: Distribution of upper-to-lower (adaxial to abaxial) stomatal density ratio per plant across cytotypes.
 </figcaption>
 </figure>
 </div>
@@ -1553,29 +1557,29 @@ Figure&nbsp;5: Distribution of adaxial to abaxial stomatal density ratio per pla
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">cytotype</td>
-<td style="text-align: right;">1.463</td>
-<td style="text-align: right;">0.488</td>
+<td style="text-align: right;">0.591</td>
+<td style="text-align: right;">0.197</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">400.016</td>
-<td style="text-align: right;">18.500</td>
+<td style="text-align: right;">429.919</td>
+<td style="text-align: right;">14.688</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">leaf_side</td>
-<td style="text-align: right;">13.695</td>
-<td style="text-align: right;">13.695</td>
+<td style="text-align: right;">0.917</td>
+<td style="text-align: right;">0.917</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">2447.687</td>
-<td style="text-align: right;">519.383</td>
+<td style="text-align: right;">2355.171</td>
+<td style="text-align: right;">68.317</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">cytotype:leaf_side</td>
-<td style="text-align: right;">1.513</td>
-<td style="text-align: right;">0.504</td>
+<td style="text-align: right;">0.332</td>
+<td style="text-align: right;">0.111</td>
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">2447.939</td>
-<td style="text-align: right;">19.130</td>
+<td style="text-align: right;">2355.322</td>
+<td style="text-align: right;">8.260</td>
 <td style="text-align: right;">0</td>
 </tr>
 </tbody>
@@ -1615,74 +1619,74 @@ Figure&nbsp;5: Distribution of adaxial to abaxial stomatal density ratio per pla
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">1.033</td>
-<td style="text-align: right;">0.059</td>
-<td style="text-align: right;">6.566</td>
-<td style="text-align: right;">0.893</td>
-<td style="text-align: right;">1.174</td>
+<td style="text-align: right;">0.489</td>
+<td style="text-align: right;">0.055</td>
+<td style="text-align: right;">4.959</td>
+<td style="text-align: right;">0.347</td>
+<td style="text-align: right;">0.632</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">0.914</td>
-<td style="text-align: right;">0.056</td>
-<td style="text-align: right;">5.470</td>
-<td style="text-align: right;">0.774</td>
-<td style="text-align: right;">1.055</td>
+<td style="text-align: right;">0.451</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">4.594</td>
+<td style="text-align: right;">0.308</td>
+<td style="text-align: right;">0.594</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">0.916</td>
-<td style="text-align: right;">0.055</td>
-<td style="text-align: right;">5.268</td>
-<td style="text-align: right;">0.776</td>
-<td style="text-align: right;">1.055</td>
+<td style="text-align: right;">0.432</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">4.492</td>
+<td style="text-align: right;">0.289</td>
+<td style="text-align: right;">0.575</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">abaxial</td>
-<td style="text-align: right;">0.762</td>
-<td style="text-align: right;">0.056</td>
-<td style="text-align: right;">5.492</td>
-<td style="text-align: right;">0.622</td>
-<td style="text-align: right;">0.902</td>
+<td style="text-align: right;">0.344</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">4.604</td>
+<td style="text-align: right;">0.201</td>
+<td style="text-align: right;">0.487</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ory_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">0.845</td>
-<td style="text-align: right;">0.059</td>
-<td style="text-align: right;">6.561</td>
-<td style="text-align: right;">0.704</td>
-<td style="text-align: right;">0.985</td>
+<td style="text-align: right;">0.437</td>
+<td style="text-align: right;">0.055</td>
+<td style="text-align: right;">4.955</td>
+<td style="text-align: right;">0.295</td>
+<td style="text-align: right;">0.580</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nat_2x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">0.735</td>
-<td style="text-align: right;">0.056</td>
-<td style="text-align: right;">5.452</td>
-<td style="text-align: right;">0.595</td>
-<td style="text-align: right;">0.876</td>
+<td style="text-align: right;">0.389</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">4.587</td>
+<td style="text-align: right;">0.246</td>
+<td style="text-align: right;">0.532</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nat_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">0.840</td>
-<td style="text-align: right;">0.055</td>
-<td style="text-align: right;">5.262</td>
-<td style="text-align: right;">0.701</td>
-<td style="text-align: right;">0.980</td>
+<td style="text-align: right;">0.414</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">4.490</td>
+<td style="text-align: right;">0.271</td>
+<td style="text-align: right;">0.557</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">neo_4x</td>
 <td style="text-align: left;">adaxial</td>
-<td style="text-align: right;">0.644</td>
-<td style="text-align: right;">0.056</td>
-<td style="text-align: right;">5.485</td>
-<td style="text-align: right;">0.503</td>
-<td style="text-align: right;">0.784</td>
+<td style="text-align: right;">0.330</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">4.600</td>
+<td style="text-align: right;">0.187</td>
+<td style="text-align: right;">0.473</td>
 </tr>
 </tbody>
 </table>
@@ -2593,7 +2597,7 @@ Figure&nbsp;6: Theoretical maximum stomatal conductance (gsmax, mol/m²s) across
 <span id="cb20-285"><a href="#cb20-285" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
 <span id="cb20-286"><a href="#cb20-286" aria-hidden="true" tabindex="-1"></a><span class="fu">### Key Biological Insights on Stomatal Density</span></span>
 <span id="cb20-287"><a href="#cb20-287" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Strong Size–Density Compensation:** As cell size increases from diploid to tetraploid, stomatal density drops sharply ($F = 58.4, p &lt; 2.2 \times 10^{-16}$). <span class="in">`neo_4x`</span> has the lowest density ($157.1$ on abaxial, $133.0$ on adaxial), whereas <span class="in">`ory_2x`</span> and <span class="in">`nat_2x`</span> reach $240 - 280$ stomata/mm².</span>
-<span id="cb20-288"><a href="#cb20-288" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Surface Specialization (Amphistomy):** All cytotypes exhibit amphistomatous leaves with consistently higher stomatal density on the lower (abaxial) surface than the upper (adaxial) surface ($F = 573.6, p &lt; 2.2 \times 10^{-16}$).</span>
+<span id="cb20-288"><a href="#cb20-288" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Surface Specialization (Stomata on Both Surfaces):** All cytotypes produce functional stomata on both the upper and lower leaf surfaces, with consistently higher stomatal density on the lower (abaxial) surface than the upper (adaxial) surface ($F = 573.6, p &lt; 2.2 \times 10^{-16}$).</span>
 <span id="cb20-289"><a href="#cb20-289" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb20-290"><a href="#cb20-290" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-291"><a href="#cb20-291" aria-hidden="true" tabindex="-1"></a>---</span>
@@ -2674,7 +2678,7 @@ Figure&nbsp;6: Theoretical maximum stomatal conductance (gsmax, mol/m²s) across
 <span id="cb20-366"><a href="#cb20-366" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-367"><a href="#cb20-367" aria-hidden="true" tabindex="-1"></a>---</span>
 <span id="cb20-368"><a href="#cb20-368" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-369"><a href="#cb20-369" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Amphistomy Ratio Across Cytotypes</span></span>
+<span id="cb20-369"><a href="#cb20-369" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Upper vs. Lower Leaf Surface Density Ratio Across Cytotypes</span></span>
 <span id="cb20-370"><a href="#cb20-370" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-371"><a href="#cb20-371" aria-hidden="true" tabindex="-1"></a>Does genome duplication alter the relative partitioning of stomata between the upper and lower leaf surfaces?</span>
 <span id="cb20-372"><a href="#cb20-372" aria-hidden="true" tabindex="-1"></a></span>
@@ -2687,17 +2691,17 @@ Figure&nbsp;6: Theoretical maximum stomatal conductance (gsmax, mol/m²s) across
 <span id="cb20-379"><a href="#cb20-379" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(abaxial), <span class="sc">!</span><span class="fu">is.na</span>(adaxial), abaxial <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb20-380"><a href="#cb20-380" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">adaxial_ratio =</span> adaxial <span class="sc">/</span> (abaxial <span class="sc">+</span> adaxial), <span class="at">ratio_ad_ab =</span> adaxial <span class="sc">/</span> abaxial)</span>
 <span id="cb20-381"><a href="#cb20-381" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-382"><a href="#cb20-382" aria-hidden="true" tabindex="-1"></a><span class="co"># Mixed model for amphistomy ratio</span></span>
+<span id="cb20-382"><a href="#cb20-382" aria-hidden="true" tabindex="-1"></a><span class="co"># Mixed model for surface ratio</span></span>
 <span id="cb20-383"><a href="#cb20-383" aria-hidden="true" tabindex="-1"></a>m_amph <span class="ot">&lt;-</span> <span class="fu">lmer</span>(ratio_ad_ab <span class="sc">~</span> cytotype <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> population), <span class="at">data =</span> amph_df)</span>
 <span id="cb20-384"><a href="#cb20-384" aria-hidden="true" tabindex="-1"></a>anova_amph <span class="ot">&lt;-</span> <span class="fu">anova</span>(m_amph)</span>
-<span id="cb20-385"><a href="#cb20-385" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">round</span>(<span class="fu">as.data.frame</span>(anova_amph), <span class="dv">3</span>), <span class="at">caption =</span> <span class="st">"ANOVA for Adaxial / Abaxial Density Ratio"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-385"><a href="#cb20-385" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">round</span>(<span class="fu">as.data.frame</span>(anova_amph), <span class="dv">3</span>), <span class="at">caption =</span> <span class="st">"ANOVA for Upper / Lower Surface (Adaxial / Abaxial) Density Ratio"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb20-386"><a href="#cb20-386" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>, <span class="st">"condensed"</span>))</span>
 <span id="cb20-387"><a href="#cb20-387" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb20-388"><a href="#cb20-388" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-389"><a href="#cb20-389" aria-hidden="true" tabindex="-1"></a><span class="in">```{r fig-amphistomy}</span></span>
 <span id="cb20-390"><a href="#cb20-390" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 8</span></span>
 <span id="cb20-391"><a href="#cb20-391" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 4.8</span></span>
-<span id="cb20-392"><a href="#cb20-392" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Distribution of adaxial to abaxial stomatal density ratio per plant across cytotypes."</span></span>
+<span id="cb20-392"><a href="#cb20-392" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Distribution of upper-to-lower (adaxial to abaxial) stomatal density ratio per plant across cytotypes."</span></span>
 <span id="cb20-393"><a href="#cb20-393" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-394"><a href="#cb20-394" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(amph_df, <span class="fu">aes</span>(<span class="at">x =</span> cytotype, <span class="at">y =</span> ratio_ad_ab, <span class="at">fill =</span> cytotype)) <span class="sc">+</span></span>
 <span id="cb20-395"><a href="#cb20-395" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fl">1.0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"#6b7280"</span>, <span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
@@ -2705,7 +2709,7 @@ Figure&nbsp;6: Theoretical maximum stomatal conductance (gsmax, mol/m²s) across
 <span id="cb20-397"><a href="#cb20-397" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> cytotype_colors) <span class="sc">+</span></span>
 <span id="cb20-398"><a href="#cb20-398" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="fl">1.4</span>)) <span class="sc">+</span></span>
 <span id="cb20-399"><a href="#cb20-399" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb20-400"><a href="#cb20-400" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Amphistomy Balance (Adaxial / Abaxial Density Ratio)"</span>,</span>
+<span id="cb20-400"><a href="#cb20-400" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Upper vs. Lower Leaf Surface Balance (Adaxial / Abaxial Density Ratio)"</span>,</span>
 <span id="cb20-401"><a href="#cb20-401" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Dashed line at 1.0 denotes equal stomatal allocation on both surfaces"</span>,</span>
 <span id="cb20-402"><a href="#cb20-402" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Cytotype"</span>,</span>
 <span id="cb20-403"><a href="#cb20-403" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Ratio (Adaxial / Abaxial Density)"</span></span>

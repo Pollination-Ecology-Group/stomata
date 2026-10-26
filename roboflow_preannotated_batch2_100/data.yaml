@@ -1,0 +1,12 @@
+# Roboflow / YOLOv8 / YOLO11 Segmentation Dataset Configuration (Batch 2)
+# Active Learning Targeted on Hard Cases (Low Conf, Closed Pores, Neopolyploids, Adaxial)
+train: ./images
+val: ./images
+
+nc: 2
+names: ['center', 'stomata-huw1']
+
+roboflow:
+  project: stomata-retraining
+  batch: 2
+  description: "100 hard-case crops (crops 201-300): neopolyploids, natural tetraploids, adaxial ridges, closed pores, and negative controls"

@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Stomata Measurement Precision QC App – Plant Stomata Counter-Analyser (PSCA)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-065a5179aebd64318d7ea99d77b64a9e.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-969ddfa49e00a70eb3423444dbc81f6c.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-065a5179aebd64318d7ea99d77b64a9e.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-6e53eafd9f94e67580b74c370946b8ff.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-ea28d0256d8d6874f8e2dd41234022a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-6e53eafd9f94e67580b74c370946b8ff.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="custom.css">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Plant Stomata Counter-Analyser (PSCA)</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./review_app.html" aria-current="page"> 
+<span class="menu-text">QC Review App</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./measurements.html"> 
+<span class="menu-text">Measurements</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./pipeline.html"> 
+<span class="menu-text">Pipeline</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./cloud_setup.html"> 
+<span class="menu-text">Cloud Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./analysis.html"> 
+<span class="menu-text">Analysis Report</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/Pollination-Ecology-Group/stomata"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview-purpose" id="toc-overview-purpose" class="nav-link active" data-scroll-target="#overview-purpose">Overview &amp; Purpose</a></li>
+  <li><a href="#key-features-interface-tour" id="toc-key-features-interface-tour" class="nav-link" data-scroll-target="#key-features-interface-tour">Key Features &amp; Interface Tour</a>
+  <ul class="collapse">
+  <li><a href="#high-magnification-stoma-precision-view" id="toc-high-magnification-stoma-precision-view" class="nav-link" data-scroll-target="#high-magnification-stoma-precision-view">1. High-Magnification Stoma Precision View</a></li>
+  <li><a href="#interactive-virtual-digital-caliper-c" id="toc-interactive-virtual-digital-caliper-c" class="nav-link" data-scroll-target="#interactive-virtual-digital-caliper-c">2. Interactive Virtual Digital Caliper (<kbd>C</kbd>)</a></li>
+  <li><a href="#panoramic-micrograph-field-explorer" id="toc-panoramic-micrograph-field-explorer" class="nav-link" data-scroll-target="#panoramic-micrograph-field-explorer">3. Panoramic Micrograph Field Explorer</a></li>
+  <li><a href="#precision-benchmark-analytics-dashboard" id="toc-precision-benchmark-analytics-dashboard" class="nav-link" data-scroll-target="#precision-benchmark-analytics-dashboard">4. Precision Benchmark Analytics Dashboard</a></li>
+  </ul></li>
+  <li><a href="#rapid-review-workflow-keyboard-shortcuts" id="toc-rapid-review-workflow-keyboard-shortcuts" class="nav-link" data-scroll-target="#rapid-review-workflow-keyboard-shortcuts">Rapid Review Workflow &amp; Keyboard Shortcuts</a></li>
+  <li><a href="#cloud-architecture-storage-integration" id="toc-cloud-architecture-storage-integration" class="nav-link" data-scroll-target="#cloud-architecture-storage-integration">Cloud Architecture &amp; Storage Integration</a>
+  <ul class="collapse">
+  <li><a href="#deployment-maintenance" id="toc-deployment-maintenance" class="nav-link" data-scroll-target="#deployment-maintenance">Deployment &amp; Maintenance</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Stomata Measurement Precision QC App</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Interactive cloud application on CESNET for visual inspection, digital caliper benchmarking, and quality control</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>🌐 Shareable CESNET App Link
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The Stomata QC and Measurement Precision application is live on the CESNET cloud infrastructure:</p>
+<p><strong>Public URL:</strong> <a href="https://stomata-review-stenc.dyn.cloud.e-infra.cz"><strong>https://stomata-review-stenc.dyn.cloud.e-infra.cz</strong></a></p>
+<p>Hosted in the <code>stenc-ns</code> Kubernetes namespace with automatic Let’s Encrypt TLS encryption, matching the established <code>pollen-review</code> and <code>viability-review</code> infrastructure.</p>
+</div>
+</div>
+<hr>
+<section id="overview-purpose" class="level2">
+<h2 class="anchored" data-anchor-id="overview-purpose">Overview &amp; Purpose</h2>
+<p>In automated plant morphometry, the central question for downstream ecological and evolutionary analysis is: <strong>How precise is the automated measurement?</strong></p>
+<p>The <strong>Stomata Precision QC App</strong> provides researchers and collaborators with a dedicated, interactive web environment to directly evaluate: 1. <strong>Segmentation accuracy:</strong> Does the YOLO segmentation polygon tightly and faithfully follow the outer guard cell boundary and inner aperture? 2. <strong>Measurement axis alignment:</strong> Does the major axis strictly span between the two stomatal poles? Does the minor axis line pass through the exact center of maximum pore width? 3. <strong>Pore aperture precision:</strong> Is the central aperture opening accurately measured, even for challenging, narrow, or partially closed stomatal pores? 4. <strong>Ploidy suitability gate:</strong> Does the stoma meet strict biometric criteria for cell size comparison across ploidy levels (<code>is_suitable_for_ploidy_sizing</code>), or is it only valid for stomatal density counting? 5. <strong>Human ground-truth benchmarking:</strong> Using the built-in <strong>Digital Caliper Tool</strong>, researchers can manually measure stomata on screen and immediately quantify the model’s Mean Absolute Error (MAE) and bias in micrometres (<span class="math inline">\(\mu\text{m}\)</span>).</p>
+<hr>
+</section>
+<section id="key-features-interface-tour" class="level2">
+<h2 class="anchored" data-anchor-id="key-features-interface-tour">Key Features &amp; Interface Tour</h2>
+<section id="high-magnification-stoma-precision-view" class="level3">
+<h3 class="anchored" data-anchor-id="high-magnification-stoma-precision-view">1. High-Magnification Stoma Precision View</h3>
+<p>The primary workspace provides an interactive HTML5 canvas with continuous smooth zoom (<span class="math inline">\(1\times\)</span> to <span class="math inline">\(8\times\)</span>) and drag-to-pan navigation to closely inspect individual stomata at sub-pixel resolution.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/stoma_precision_view.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<figcaption>Stoma Crop Precision view showing color-coded anatomical vectors, measurement indicators, and the reviewer inspector panel.</figcaption>
+</figure>
+</div>
+<section id="vectorized-anatomical-overlays" class="level4">
+<h4 class="anchored" data-anchor-id="vectorized-anatomical-overlays">Vectorized Anatomical Overlays</h4>
+<p>The canvas overlays the mathematical measurement vectors calculated by the pipeline:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Color Code</th>
+<th>Biological Meaning</th>
+<th>Mathematical Calculation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Stoma Body</strong></td>
+<td>Green (<code>#22c55e</code>)</td>
+<td>Outer boundary of guard cell pair</td>
+<td>YOLO Class 1 segmentation polygon</td>
+</tr>
+<tr class="even">
+<td><strong>Pore Aperture</strong></td>
+<td>Cyan (<code>#06b6d4</code>)</td>
+<td>Central aperture opening</td>
+<td>YOLO Class 0 central polygon</td>
+</tr>
+<tr class="odd">
+<td><strong>Major Axis</strong></td>
+<td>Yellow (<code>#eab308</code>)</td>
+<td>Longitudinal stoma length (<span class="math inline">\(L_{\text{maj}}\)</span>)</td>
+<td>Minimum bounding rectangle long axis (<span class="math inline">\(\mu\text{m}\)</span>)</td>
+</tr>
+<tr class="even">
+<td><strong>Minor Axis</strong></td>
+<td>Orange (<code>#f97316</code>)</td>
+<td>Full transverse stoma width (<span class="math inline">\(L_{\text{min}}\)</span>)</td>
+<td>Orthogonal chord through centroid (<span class="math inline">\(\mu\text{m}\)</span>)</td>
+</tr>
+<tr class="odd">
+<td><strong>Pore Width</strong></td>
+<td>Cyan Line (<code>#06b6d4</code>)</td>
+<td>Transverse pore aperture diameter (<span class="math inline">\(P_w\)</span>)</td>
+<td>Line intersection with pore boundary (<span class="math inline">\(\mu\text{m}\)</span>)</td>
+</tr>
+<tr class="even">
+<td><strong>Guard Cell Width</strong></td>
+<td>Magenta (<code>#d946ef</code>)</td>
+<td>Radial thickness of single guard cell</td>
+<td><span class="math inline">\((L_{\text{minor}} - P_{\text{width}}) / 2\)</span> (<span class="math inline">\(\mu\text{m}\)</span>)</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Hold <code>Space</code>:</strong> Instantly hides all vector overlays to inspect the raw, unfiltered microscopy image.</li>
+<li><strong>Press <code>X</code>:</strong> Toggles CLAHE (Contrast-Limited Adaptive Histogram Equalization) to enhance faint guard cell walls in lower-contrast images.</li>
+</ul>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="interactive-virtual-digital-caliper-c" class="level3">
+<h3 class="anchored" data-anchor-id="interactive-virtual-digital-caliper-c">2. Interactive Virtual Digital Caliper (<kbd>C</kbd>)</h3>
+<p>The app features an integrated <strong>Digital Caliper Tool</strong> allowing researchers to independently measure any anatomical dimension with precision crosshairs directly on the crop canvas.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/stoma_caliper_view.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<figcaption>Virtual Caliper in action: Click-and-drag crosshairs measure distance in micrometres and compare directly against the automated model measurement.</figcaption>
+</figure>
+</div>
+<section id="how-to-benchmark-measurement-precision" class="level4">
+<h4 class="anchored" data-anchor-id="how-to-benchmark-measurement-precision">How to Benchmark Measurement Precision:</h4>
+<ol type="1">
+<li>Click <strong>📏 Digital Caliper</strong> (or press <kbd>C</kbd>).</li>
+<li>Click and drag across the stoma poles (for length), across the stoma waist (for width), or across the pore opening.</li>
+<li>The <strong>Caliper HUD</strong> displays:
+<ul>
+<li>Measured physical distance in <span class="math inline">\(\mu\text{m}\)</span> (using the calibration <span class="math inline">\(\text{PX\_TO\_UM} \approx 0.1107675\,\mu\text{m/px}\)</span>).</li>
+<li>Quick buttons: <strong>Set Major</strong>, <strong>Set Minor</strong>, or <strong>Set Pore</strong> to record the ground truth comparison.</li>
+</ul></li>
+<li>The system calculates the exact discrepancy: <span class="math display">\[\Delta = \text{Model} - \text{Human}\quad (\mu\text{m})\]</span> <span class="math display">\[\text{Error } \% = \frac{|\text{Model} - \text{Human}|}{\text{Human}} \times 100\%\]</span></li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="panoramic-micrograph-field-explorer" class="level3">
+<h3 class="anchored" data-anchor-id="panoramic-micrograph-field-explorer">3. Panoramic Micrograph Field Explorer</h3>
+<p>Switching to the <strong>Micrograph Field</strong> tab allows researchers to step back and inspect the full <span class="math inline">\(3096 \times 4140\)</span> px brightfield microscopy slide with all detected stomata annotated.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/micrograph_field_view.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<figcaption>Full Micrograph Field view with annotated stoma badges and slide metadata.</figcaption>
+</figure>
+</div>
+<p>Researchers can verify field-level characteristics: - Spatial distribution and clustering (Clark-Evans dispersion index) - Epidermal quality, focus variation across the leaf surface, air bubbles, and staining artifacts - Jump directly to any slide or plant ID from the left sidebar</p>
+<hr>
+</section>
+<section id="precision-benchmark-analytics-dashboard" class="level3">
+<h3 class="anchored" data-anchor-id="precision-benchmark-analytics-dashboard">4. Precision Benchmark Analytics Dashboard</h3>
+<p>The <strong>Precision Dashboard</strong> tab compiles real-time accuracy benchmarks across all reviewer evaluations and caliper measurements.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/precision_dashboard_view.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<figcaption>Precision Analytics Dashboard showing error benchmarks, MAE in micrometres, and reviewer audit progress.</figcaption>
+</figure>
+</div>
+<section id="available-benchmarks-telemetry" class="level4">
+<h4 class="anchored" data-anchor-id="available-benchmarks-telemetry">Available Benchmarks &amp; Telemetry:</h4>
+<ul>
+<li><strong>Precision Classification Rate:</strong> Percentage of stomata verified as <em>High Precision</em> vs <em>Minor Deviation</em> vs <em>Poor Measurement</em>.</li>
+<li><strong>Mean Absolute Error (MAE):</strong> Average deviation in <span class="math inline">\(\mu\text{m}\)</span> between automated model measurements and human digital caliper measurements for Major Axis, Minor Axis, and Pore Width.</li>
+<li><strong>Mean Bias:</strong> Identifies whether the automated model tends to systematically over- or under-estimate pore aperture or cell width.</li>
+<li><strong>Reviewer Progress &amp; Audit Trail:</strong> Number of stomata reviewed per collaborator, median time per evaluation, and timestamps.</li>
+<li><strong>One-Click CSV Export:</strong> Direct download of <a href="https://stomata-review-stenc.dyn.cloud.e-infra.cz/api/export/precision.csv"><code>precision.csv</code></a> for statistical analysis in R or Python.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="rapid-review-workflow-keyboard-shortcuts" class="level2">
+<h2 class="anchored" data-anchor-id="rapid-review-workflow-keyboard-shortcuts">Rapid Review Workflow &amp; Keyboard Shortcuts</h2>
+<p>To enable rapid quality control of hundreds of stomata without mouse fatigue, all key actions are bound to single keystrokes:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Shortcut</th>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><kbd>1</kbd></td>
+<td><strong>High Precision</strong></td>
+<td>Poles aligned, aperture crisp, verified for ploidy sizing</td>
+</tr>
+<tr class="even">
+<td><kbd>2</kbd></td>
+<td><strong>Minor Deviation</strong></td>
+<td>Acceptable for density counting, slight angle or edge deviation</td>
+</tr>
+<tr class="odd">
+<td><kbd>3</kbd></td>
+<td><strong>Poor Measurement</strong></td>
+<td>Significant outline error, pore missed, or severe distortion</td>
+</tr>
+<tr class="even">
+<td><kbd>4</kbd></td>
+<td><strong>False Stoma</strong></td>
+<td>Non-stoma epidermal debris, air bubble, or artifact</td>
+</tr>
+<tr class="odd">
+<td><kbd>Enter</kbd></td>
+<td><strong>Save &amp; Next</strong></td>
+<td>Saves decision to CESNET S3 and advances to next stoma</td>
+</tr>
+<tr class="even">
+<td><kbd>C</kbd></td>
+<td><strong>Digital Caliper</strong></td>
+<td>Toggles virtual caliper crosshairs for manual measurement</td>
+</tr>
+<tr class="odd">
+<td><kbd>X</kbd></td>
+<td><strong>Contrast Filter</strong></td>
+<td>Toggles CLAHE contrast boost</td>
+</tr>
+<tr class="even">
+<td><kbd>Space</kbd></td>
+<td><strong>Peek Raw Image</strong></td>
+<td>Hold to temporarily hide overlays</td>
+</tr>
+<tr class="odd">
+<td><kbd>←</kbd> / <kbd>→</kbd></td>
+<td><strong>Navigate</strong></td>
+<td>Move to previous / next stoma in the queue</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="cloud-architecture-storage-integration" class="level2">
+<h2 class="anchored" data-anchor-id="cloud-architecture-storage-integration">Cloud Architecture &amp; Storage Integration</h2>
+<p>The review application operates entirely stateless inside the cluster, persisting all review data directly to the CESNET S3 Ceph object store (<code>peg-bucket</code>):</p>
+<pre><code>s3://peg-bucket/Ostatni/Stomata/Review/
+├── manifest.json              # Full dataset manifest with geometric vectors
+├── crops/                     # High-resolution 360x360 stoma crops (JPEG)
+├── overviews/                 # Scaled panoramic field micrographs (JPEG)
+└── decisions/                 # Reviewer decisions and caliper ground truth
+    └── {item_id}/
+        └── {reviewer}.json    # JSON audit record per item and reviewer</code></pre>
+<p>Because decisions are committed directly to S3 as individual JSON records, reviews are safely preserved across pod updates or restarts, and multiple team members can review simultaneously without conflicts.</p>
+<section id="deployment-maintenance" class="level3">
+<h3 class="anchored" data-anchor-id="deployment-maintenance">Deployment &amp; Maintenance</h3>
+<p>The app can be redeployed or updated with a single script:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> deploy_stomata_review.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This updates the Kubernetes ConfigMap, applies the Deployment and Ingress specifications in <code>k8s/stomata-review.yaml</code>, and executes a zero-downtime rolling restart on the CESNET cluster.</p>
+
+
+<!-- -->
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Stomata Measurement Precision QC App"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Interactive cloud application on CESNET for visual inspection, digital caliper benchmarking, and quality control"</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## 🌐 Shareable CESNET App Link</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>The Stomata QC and Measurement Precision application is live on the CESNET cloud infrastructure:</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>**Public URL:** [**https://stomata-review-stenc.dyn.cloud.e-infra.cz**](https://stomata-review-stenc.dyn.cloud.e-infra.cz)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>Hosted in the <span class="in">`stenc-ns`</span> Kubernetes namespace with automatic Let's Encrypt TLS encryption, matching the established <span class="in">`pollen-review`</span> and <span class="in">`viability-review`</span> infrastructure.</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview &amp; Purpose</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>In automated plant morphometry, the central question for downstream ecological and evolutionary analysis is: **How precise is the automated measurement?**</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>The **Stomata Precision QC App** provides researchers and collaborators with a dedicated, interactive web environment to directly evaluate:</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Segmentation accuracy:** Does the YOLO segmentation polygon tightly and faithfully follow the outer guard cell boundary and inner aperture?</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Measurement axis alignment:** Does the major axis strictly span between the two stomatal poles? Does the minor axis line pass through the exact center of maximum pore width?</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Pore aperture precision:** Is the central aperture opening accurately measured, even for challenging, narrow, or partially closed stomatal pores?</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**Ploidy suitability gate:** Does the stoma meet strict biometric criteria for cell size comparison across ploidy levels (<span class="in">`is_suitable_for_ploidy_sizing`</span>), or is it only valid for stomatal density counting?</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**Human ground-truth benchmarking:** Using the built-in **Digital Caliper Tool**, researchers can manually measure stomata on screen and immediately quantify the model's Mean Absolute Error (MAE) and bias in micrometres ($\mu\text{m}$).</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Features &amp; Interface Tour</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. High-Magnification Stoma Precision View</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>The primary workspace provides an interactive HTML5 canvas with continuous smooth zoom ($1\times$ to $8\times$) and drag-to-pan navigation to closely inspect individual stomata at sub-pixel resolution.</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="al">![Stoma Crop Precision view showing color-coded anatomical vectors, measurement indicators, and the reviewer inspector panel.](assets/stoma_precision_view.png)</span>{fig-align="center" width="95%"}</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Vectorized Anatomical Overlays</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>The canvas overlays the mathematical measurement vectors calculated by the pipeline:</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Layer <span class="pp">|</span> Color Code <span class="pp">|</span> Biological Meaning <span class="pp">|</span> Mathematical Calculation <span class="pp">|</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Stoma Body** <span class="pp">|</span> Green (<span class="in">`#22c55e`</span>) <span class="pp">|</span> Outer boundary of guard cell pair <span class="pp">|</span> YOLO Class 1 segmentation polygon <span class="pp">|</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Pore Aperture** <span class="pp">|</span> Cyan (<span class="in">`#06b6d4`</span>) <span class="pp">|</span> Central aperture opening <span class="pp">|</span> YOLO Class 0 central polygon <span class="pp">|</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Major Axis** <span class="pp">|</span> Yellow (<span class="in">`#eab308`</span>) <span class="pp">|</span> Longitudinal stoma length ($L_{\text{maj}}$) <span class="pp">|</span> Minimum bounding rectangle long axis ($\mu\text{m}$) <span class="pp">|</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Minor Axis** <span class="pp">|</span> Orange (<span class="in">`#f97316`</span>) <span class="pp">|</span> Full transverse stoma width ($L_{\text{min}}$) <span class="pp">|</span> Orthogonal chord through centroid ($\mu\text{m}$) <span class="pp">|</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Pore Width** <span class="pp">|</span> Cyan Line (<span class="in">`#06b6d4`</span>) <span class="pp">|</span> Transverse pore aperture diameter ($P_w$) <span class="pp">|</span> Line intersection with pore boundary ($\mu\text{m}$) <span class="pp">|</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Guard Cell Width** <span class="pp">|</span> Magenta (<span class="in">`#d946ef`</span>) <span class="pp">|</span> Radial thickness of single guard cell <span class="pp">|</span> $(L_{\text{minor}} - P_{\text{width}}) / 2$ ($\mu\text{m}$) <span class="pp">|</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Hold `Space`:** Instantly hides all vector overlays to inspect the raw, unfiltered microscopy image.</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Press `X`:** Toggles CLAHE (Contrast-Limited Adaptive Histogram Equalization) to enhance faint guard cell walls in lower-contrast images.</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Interactive Virtual Digital Caliper (&lt;kbd&gt;C&lt;/kbd&gt;)</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>The app features an integrated **Digital Caliper Tool** allowing researchers to independently measure any anatomical dimension with precision crosshairs directly on the crop canvas.</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="al">![Virtual Caliper in action: Click-and-drag crosshairs measure distance in micrometres and compare directly against the automated model measurement.](assets/stoma_caliper_view.png)</span>{fig-align="center" width="95%"}</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="fu">#### How to Benchmark Measurement Precision:</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Click **📏 Digital Caliper** (or press <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>C<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span>).</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Click and drag across the stoma poles (for length), across the stoma waist (for width), or across the pore opening.</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>The **Caliper HUD** displays:</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Measured physical distance in $\mu\text{m}$ (using the calibration $\text{PX<span class="sc">\_</span>TO<span class="sc">\_</span>UM} \approx 0.1107675\,\mu\text{m/px}$).</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a><span class="ss">   - </span>Quick buttons: **Set Major**, **Set Minor**, or **Set Pore** to record the ground truth comparison.</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>The system calculates the exact discrepancy:</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>   $$\Delta = \text{Model} - \text{Human}\quad (\mu\text{m})$$</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>   $$\text{Error } \% = \frac{|\text{Model} - \text{Human}|}{\text{Human}} \times 100\%$$</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. Panoramic Micrograph Field Explorer</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>Switching to the **Micrograph Field** tab allows researchers to step back and inspect the full $3096 \times 4140$ px brightfield microscopy slide with all detected stomata annotated.</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="al">![Full Micrograph Field view with annotated stoma badges and slide metadata.](assets/micrograph_field_view.png)</span>{fig-align="center" width="95%"}</span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>Researchers can verify field-level characteristics:</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Spatial distribution and clustering (Clark-Evans dispersion index)</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Epidermal quality, focus variation across the leaf surface, air bubbles, and staining artifacts</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Jump directly to any slide or plant ID from the left sidebar</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a><span class="fu">### 4. Precision Benchmark Analytics Dashboard</span></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>The **Precision Dashboard** tab compiles real-time accuracy benchmarks across all reviewer evaluations and caliper measurements.</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a><span class="al">![Precision Analytics Dashboard showing error benchmarks, MAE in micrometres, and reviewer audit progress.](assets/precision_dashboard_view.png)</span>{fig-align="center" width="95%"}</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Available Benchmarks &amp; Telemetry:</span></span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Precision Classification Rate:** Percentage of stomata verified as *High Precision* vs *Minor Deviation* vs *Poor Measurement*.</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Mean Absolute Error (MAE):** Average deviation in $\mu\text{m}$ between automated model measurements and human digital caliper measurements for Major Axis, Minor Axis, and Pore Width.</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Mean Bias:** Identifies whether the automated model tends to systematically over- or under-estimate pore aperture or cell width.</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reviewer Progress &amp; Audit Trail:** Number of stomata reviewed per collaborator, median time per evaluation, and timestamps.</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**One-Click CSV Export:** Direct download of <span class="co">[</span><span class="ot">`precision.csv`</span><span class="co">](https://stomata-review-stenc.dyn.cloud.e-infra.cz/api/export/precision.csv)</span> for statistical analysis in R or Python.</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a><span class="fu">## Rapid Review Workflow &amp; Keyboard Shortcuts</span></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>To enable rapid quality control of hundreds of stomata without mouse fatigue, all key actions are bound to single keystrokes:</span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Shortcut <span class="pp">|</span> Action <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>1<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **High Precision** <span class="pp">|</span> Poles aligned, aperture crisp, verified for ploidy sizing <span class="pp">|</span></span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>2<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Minor Deviation** <span class="pp">|</span> Acceptable for density counting, slight angle or edge deviation <span class="pp">|</span></span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>3<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Poor Measurement** <span class="pp">|</span> Significant outline error, pore missed, or severe distortion <span class="pp">|</span></span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>4<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **False Stoma** <span class="pp">|</span> Non-stoma epidermal debris, air bubble, or artifact <span class="pp">|</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>Enter<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Save &amp; Next** <span class="pp">|</span> Saves decision to CESNET S3 and advances to next stoma <span class="pp">|</span></span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>C<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Digital Caliper** <span class="pp">|</span> Toggles virtual caliper crosshairs for manual measurement <span class="pp">|</span></span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>X<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Contrast Filter** <span class="pp">|</span> Toggles CLAHE contrast boost <span class="pp">|</span></span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>Space<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Peek Raw Image** <span class="pp">|</span> Hold to temporarily hide overlays <span class="pp">|</span></span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>←<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> / <span class="dt">&lt;</span><span class="kw">kbd</span><span class="dt">&gt;</span>→<span class="dt">&lt;/</span><span class="kw">kbd</span><span class="dt">&gt;</span> <span class="pp">|</span> **Navigate** <span class="pp">|</span> Move to previous / next stoma in the queue <span class="pp">|</span></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cloud Architecture &amp; Storage Integration</span></span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>The review application operates entirely stateless inside the cluster, persisting all review data directly to the CESNET S3 Ceph object store (<span class="in">`peg-bucket`</span>):</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a><span class="in">s3://peg-bucket/Ostatni/Stomata/Review/</span></span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a><span class="in">├── manifest.json              # Full dataset manifest with geometric vectors</span></span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a><span class="in">├── crops/                     # High-resolution 360x360 stoma crops (JPEG)</span></span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a><span class="in">├── overviews/                 # Scaled panoramic field micrographs (JPEG)</span></span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a><span class="in">└── decisions/                 # Reviewer decisions and caliper ground truth</span></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a><span class="in">    └── {item_id}/</span></span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a><span class="in">        └── {reviewer}.json    # JSON audit record per item and reviewer</span></span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>Because decisions are committed directly to S3 as individual JSON records, reviews are safely preserved across pod updates or restarts, and multiple team members can review simultaneously without conflicts.</span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a><span class="fu">### Deployment &amp; Maintenance</span></span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>The app can be redeployed or updated with a single script:</span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> deploy_stomata_review.sh</span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a>This updates the Kubernetes ConfigMap, applies the Deployment and Ingress specifications in <span class="in">`k8s/stomata-review.yaml`</span>, and executes a zero-downtime rolling restart on the CESNET cluster.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>Pollination Ecology Group · PSCA Documentation</p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

@@ -1,5 +1,11 @@
 # Plant Stomata Counter-Analyser (PSCA)
 
+> **🚀 Live App: Stomata Measurement Precision & QC Review**  
+> Inspect automated stomata segmentation, verify biometric axes ($L_{\text{maj}}$, $L_{\text{min}}$, $P_w$, $G_w$), measure ground-truth with digital calipers, and evaluate precision across cytotypes on the CESNET cloud:  
+> 👉 **[Open Stomata QC App (https://stomata-review-stenc.dyn.cloud.e-infra.cz)](https://stomata-review-stenc.dyn.cloud.e-infra.cz)** · **[Read the QC App Documentation](review_app.qmd)**
+
+---
+
 ## ☁️ CESNET S3 Cloud Storage Connection Protocol
 
 **Goal:** Connect our team's cloud storage (CESNET S3) to your local computer so it appears as a regular folder. This allows you to drag-and-drop files from tools like Fiji, Excel, or RStudio directly to the cloud without using the browser.

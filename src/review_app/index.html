@@ -1,0 +1,1990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🌿 Stomata Morphometry QC & Precision Review</title>
+<meta name="description" content="Interactive visual quality control and measurement precision verification for leaf stomata morphometrics.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #090c10;
+  --surface: #111622;
+  --panel: #161d2d;
+  --panel-hover: #1e273d;
+  --border: #232e44;
+  --border-focus: #3b82f6;
+  --text: #f0f4fc;
+  --muted: #8b9bb4;
+  --dim: #55657e;
+  
+  /* Biological measurement palette */
+  --stoma-green: #22c55e;
+  --pore-cyan: #06b6d4;
+  --maj-yellow: #eab308;
+  --min-orange: #f97316;
+  --gc-magenta: #d946ef;
+  --caliper-lime: #a3e635;
+  
+  /* Verdict colors */
+  --verdict-high: #22c55e;
+  --verdict-minor: #f59e0b;
+  --verdict-poor: #ef4444;
+  --verdict-false: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 14px; overflow: hidden; }
+[hidden] { display: none !important; }
+
+/* Header */
+header {
+  height: 56px;
+  background: rgba(17, 22, 34, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  z-index: 10;
+  position: relative;
+}
+header h1 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+}
+header h1 .badge {
+  font-size: 10.5px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+}
+.tabs button {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+.tabs button:hover { color: var(--text); }
+.tabs button.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.spacer { flex: 1; }
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.progress-bar-bg {
+  width: 110px;
+  height: 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #22c55e);
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.reviewer-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.reviewer-badge b {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.app-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  background: rgba(244, 114, 182, 0.1);
+  color: #f472b6;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.app-switcher-btn:hover {
+  background: rgba(244, 114, 182, 0.22);
+  border-color: #f472b6;
+  color: #fdf2f8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(244, 114, 182, 0.25);
+}
+
+.export-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.export-links a {
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.export-links a:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+.export-links a.btn-pack-roboflow {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  font-weight: 500;
+}
+.export-links a.btn-pack-roboflow:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #f59e0b;
+  color: #fef3c7;
+}
+.export-links a.btn-pack-roboflow.has-items {
+  border-color: #f59e0b;
+  animation: pulse-glow 2.5s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.35); }
+}
+
+.relabel-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+.relabel-toggle-btn:hover {
+  background: var(--panel-hover);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.relabel-toggle-btn.active {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.slide-relabel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.slide-relabel-btn:hover {
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.slide-relabel-btn.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.relabel-badge {
+  font-size: 10px;
+  padding: 1px 4px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  border-radius: 4px;
+  margin-left: 2px;
+}
+
+/* Layout */
+main {
+  height: calc(100vh - 56px);
+  display: flex;
+  overflow: hidden;
+}
+
+/* View 1: Crop Precision View */
+#view-crop {
+  display: grid;
+  grid-template-columns: 240px 1fr 340px;
+  grid-template-rows: 100%;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sidebar Queue */
+.queue-panel {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.queue-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.filter-row {
+  display: flex;
+  gap: 6px;
+}
+.filter-row select, .filter-row input {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.queue-list {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--muted);
+  transition: 0.1s;
+}
+.queue-item:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+.queue-item.active {
+  background: var(--panel);
+  color: #fff;
+  border: 1px solid var(--border);
+  font-weight: 600;
+}
+.v-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.v-dot.high_precision { background: var(--verdict-high); box-shadow: 0 0 6px var(--verdict-high); }
+.v-dot.minor_error { background: var(--verdict-minor); }
+.v-dot.poor_measurement { background: var(--verdict-poor); }
+.v-dot.false_stoma { background: var(--verdict-false); }
+
+.tag-pill {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  margin-left: auto;
+}
+.tag-pill.suitable {
+  color: var(--stoma-green);
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+/* Center Stage (Canvas Viewer) */
+.stage-panel {
+  display: flex;
+  flex-direction: column;
+  background: #06090e;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+.stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(17, 22, 34, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 2;
+}
+.stage-bar button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: 0.15s;
+}
+.stage-bar button:hover { border-color: var(--border-focus); }
+.stage-bar button.active {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.layer-toggles {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.layer-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.layer-toggles input[type="checkbox"] { cursor: pointer; accent-color: var(--border-focus); }
+
+.canvas-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: grab;
+}
+.canvas-container.panning { cursor: grabbing; }
+.canvas-container.caliper-mode { cursor: crosshair; }
+
+#cv {
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  border-radius: 4px;
+  display: block;
+}
+
+.stage-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(17, 22, 34, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  z-index: 2;
+}
+.legend-swatch {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-swatch span {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* Caliper HUD Overlay */
+.caliper-hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(17, 22, 34, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--caliper-lime);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeIn 0.15s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.caliper-hud strong { color: var(--caliper-lime); font-size: 15px; font-family: 'JetBrains Mono', monospace; }
+.caliper-hud .caliper-btns { display: flex; gap: 6px; margin-top: 4px; }
+.caliper-hud .caliper-btns button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.caliper-hud .caliper-btns button:hover { border-color: var(--caliper-lime); color: var(--caliper-lime); }
+
+/* Right Inspector Panel */
+.inspector-panel {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+}
+.card h3 span { color: var(--text); }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.metric-box {
+  display: flex;
+  flex-direction: column;
+}
+.metric-box .label {
+  font-size: 11px;
+  color: var(--muted);
+}
+.metric-box .val {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+.metric-box .val small {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: normal;
+}
+
+/* Verdict Selector */
+.verdict-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn-verdict {
+  padding: 10px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  font-size: 12px;
+  transition: 0.15s;
+}
+.btn-verdict small { font-size: 10px; color: var(--muted); font-weight: normal; }
+.btn-verdict:hover { border-color: var(--muted); }
+.btn-verdict.active.high { background: rgba(34, 197, 94, 0.18); border-color: var(--verdict-high); color: var(--verdict-high); }
+.btn-verdict.active.minor { background: rgba(245, 158, 11, 0.18); border-color: var(--verdict-minor); color: var(--verdict-minor); }
+.btn-verdict.active.poor { background: rgba(239, 68, 68, 0.18); border-color: var(--verdict-poor); color: var(--verdict-poor); }
+.btn-verdict.active.false { background: rgba(148, 163, 184, 0.18); border-color: var(--verdict-false); color: var(--verdict-false); }
+
+.issue-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+.issue-checks label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.issue-checks input[type="checkbox"] { cursor: pointer; accent-color: var(--verdict-minor); }
+
+textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  min-height: 52px;
+  resize: vertical;
+}
+textarea:focus { border-color: var(--border-focus); outline: none; }
+
+.save-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transition: all 0.15s;
+}
+.save-btn:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); transform: translateY(-1px); }
+
+kbd {
+  font-size: 10.5px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-bottom-width: 2px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--muted);
+}
+
+/* View 2: Field Overview */
+#view-overview {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  width: 100%;
+  height: 100%;
+}
+.slides-list {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.slide-card {
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.slide-card:hover { border-color: var(--border-focus); }
+.slide-card.active { border-color: var(--border-focus); background: rgba(59, 130, 246, 0.12); }
+.slide-card strong { display: block; font-size: 13px; margin-bottom: 3px; }
+.slide-card .sub { font-size: 11.5px; color: var(--muted); }
+
+.field-viewer {
+  display: flex;
+  flex-direction: column;
+  background: #05070a;
+  overflow: hidden;
+  position: relative;
+}
+.field-header {
+  padding: 8px 16px;
+  background: rgba(17, 22, 34, 0.85);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+}
+.field-canvas-wrap {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  position: relative;
+}
+.field-canvas-wrap img {
+  max-width: 96%;
+  max-height: 94%;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* View 3: Analytics Dashboard */
+#view-analytics {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.dash-header h2 { margin: 0 0 6px; font-size: 22px; }
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.stat-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.stat-box .title { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+.stat-box .num { font-size: 32px; font-weight: 700; margin: 6px 0 2px; font-family: 'JetBrains Mono', monospace; }
+.stat-box .sub { font-size: 12px; color: var(--muted); }
+
+.chart-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.chart-card h3 { margin: 0 0 14px; font-size: 14px; font-weight: 600; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; }
+td.num { font-family: 'JetBrains Mono', monospace; text-align: right; }
+th.num { text-align: right; }
+
+/* Help Modal / View */
+#view-help {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 30px 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.help-section { margin-bottom: 24px; }
+.help-section h3 { font-size: 16px; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 12px; }
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-hover);
+  border: 1px solid var(--border-focus);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 Stomata Precision <span>QC</span> <span class="badge">CESNET</span></h1>
+  
+  <div class="tabs">
+    <button id="tab-crop" class="active" onclick="switchView('crop')">🔬 Stoma Precision</button>
+    <button id="tab-overview" onclick="switchView('overview')">🗺️ Micrograph Field</button>
+    <button id="tab-analytics" onclick="switchView('analytics')">📊 Precision Dashboard</button>
+    <button id="tab-help" onclick="switchView('help')">❓ Guide &amp; Calipers</button>
+  </div>
+  
+  <a href="https://viability-review-stenc.dyn.cloud.e-infra.cz" target="_blank" rel="noopener" class="app-switcher-btn" title="Switch to Pollen Viability QC App">
+    🌸 Pollen Viability ↗
+  </a>
+
+  <div class="spacer"></div>
+  
+  <div class="header-meta">
+    <div class="progress-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-bar"></div></div>
+      <span id="prog-txt">0 / 0</span>
+    </div>
+    
+    <div class="reviewer-badge">
+      <span style="color:var(--muted)">Reviewer:</span>
+      <b id="reviewer-name">jakub</b>
+    </div>
+    
+    <div class="export-links">
+      <a href="/api/export/precision.csv" title="Download model vs human caliper measurement CSV">📥 precision.csv</a>
+      <a id="btn-pack-roboflow" href="/api/export/roboflow_relabel.zip" class="btn-pack-roboflow" title="Download packaged Roboflow dataset for all flagged crops">📦 Pack Roboflow (<span id="relabel-count">0</span>)</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- View 1: Crop Precision Review -->
+  <section id="view-crop">
+    <!-- Left: Queue -->
+    <aside class="queue-panel">
+      <div class="queue-header">
+        <div class="filter-row">
+          <select id="filter-cytotype" onchange="applyFilters()">
+            <option value="all">All Cytotypes</option>
+            <option value="ory_2x">ory_2x</option>
+            <option value="nat_2x">nat_2x</option>
+            <option value="neo_4x">neo_4x</option>
+            <option value="nat_4x">nat_4x</option>
+          </select>
+          <select id="filter-suitability" onchange="applyFilters()">
+            <option value="all">All Sizing</option>
+            <option value="suitable">Ploidy Sizing</option>
+            <option value="unsuitable">Density Only</option>
+          </select>
+        </div>
+      </div>
+      <div class="queue-list" id="queue-container"></div>
+    </aside>
+
+    <!-- Center: Stage -->
+    <section class="stage-panel">
+      <div class="stage-bar">
+        <button onclick="nav(-1)" title="Previous stoma (Left Arrow)">← Prev</button>
+        <button onclick="nav(1)" title="Next stoma (Right Arrow)">Next →</button>
+        
+        <button id="btn-caliper" onclick="toggleCaliper()" title="Toggle Digital Caliper (C)">📏 Digital Caliper <kbd>C</kbd></button>
+        <button id="btn-clahe" onclick="toggleClahe()" title="Contrast enhance (X)">✨ Contrast</button>
+        
+        <div class="spacer"></div>
+        
+        <div class="layer-toggles">
+          <label><input type="checkbox" id="chk-stoma-outline" checked onchange="draw()"> Stoma</label>
+          <label><input type="checkbox" id="chk-pore-outline" checked onchange="draw()"> Pore</label>
+          <label><input type="checkbox" id="chk-major-axis" checked onchange="draw()"> Major Axis</label>
+          <label><input type="checkbox" id="chk-minor-axis" checked onchange="draw()"> Minor Axis</label>
+          <label><input type="checkbox" id="chk-companion" checked onchange="draw()"> Companions</label>
+          <label><input type="checkbox" id="chk-labels" checked onchange="draw()"> Dimensions</label>
+        </div>
+      </div>
+
+      <div class="canvas-container" id="canvas-wrap">
+        <canvas id="cv" width="600" height="600"></canvas>
+        
+        <!-- Interactive Caliper HUD -->
+        <div class="caliper-hud" id="caliper-hud" hidden>
+          <span style="font-size:11px;color:var(--muted)">Virtual Caliper</span>
+          <strong id="caliper-len">0.00 µm</strong>
+          <span id="caliper-px" style="font-size:11px;color:var(--muted)">0.0 px</span>
+          <div class="caliper-btns">
+            <button onclick="applyCaliperTo('major')" title="Use as ground truth major axis">Set Major</button>
+            <button onclick="applyCaliperTo('minor')" title="Use as ground truth minor axis">Set Minor</button>
+            <button onclick="applyCaliperTo('pore')" title="Use as ground truth pore width">Set Pore</button>
+            <button onclick="resetCaliper()" style="color:#ef4444">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-footer">
+        <div class="legend-swatch"><span style="background:var(--stoma-green)"></span> Stoma Polygon</div>
+        <div class="legend-swatch"><span style="background:var(--pore-cyan)"></span> Pore Aperture</div>
+        <div class="legend-swatch"><span style="background:var(--maj-yellow)"></span> Major Axis (Length)</div>
+        <div class="legend-swatch"><span style="background:var(--min-orange)"></span> Minor Axis (Width)</div>
+        <div class="legend-swatch"><span style="background:var(--gc-magenta)"></span> Guard Cell Ticks</div>
+        <div class="spacer"></div>
+        <span>Hold <kbd>Space</kbd> for raw micrograph · Scroll to Zoom · Drag to Pan</span>
+      </div>
+    </section>
+
+    <!-- Right: Inspector & Verdict -->
+    <aside class="inspector-panel">
+      <!-- Metadata Card -->
+      <div class="card">
+        <h3>Sample &amp; Plant Info <span id="m-plant">4-10-A</span></h3>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <span class="label">Cytotype</span>
+            <span class="val" id="m-cyto">nat_2x</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Leaf Side</span>
+            <span class="val" id="m-side">adaxial</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Focus Score</span>
+            <span class="val" id="m-focus">5.8 <small>/100</small></span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Sizing Suitable</span>
+            <span class="val" id="m-suitable">Yes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Measurement Card -->
+      <div class="card">
+        <h3>Model Morphometrics</h3>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <span class="label">Major Axis (Length)</span>
+            <span class="val" id="val-maj" style="color:var(--maj-yellow)">0.0 µm</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Minor Axis (Width)</span>
+            <span class="val" id="val-min" style="color:var(--min-orange)">0.0 µm</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Pore Aperture</span>
+            <span class="val" id="val-pore" style="color:var(--pore-cyan)">0.0 µm</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Guard Cell Width</span>
+            <span class="val" id="val-gc" style="color:var(--gc-magenta)">0.0 µm</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Aspect Ratio</span>
+            <span class="val" id="val-ar">0.0</span>
+          </div>
+          <div class="metric-box">
+            <span class="label">Aperture Ratio</span>
+            <span class="val" id="val-aperture">0.0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Precision Verification -->
+      <div class="card">
+        <h3>Measurement Precision Verdict</h3>
+        <div class="verdict-grid">
+          <button class="btn-verdict high" onclick="setVerdict('high_precision')">
+            <span>High Precision</span>
+            <small>Poles aligned · Crisp aperture <kbd>1</kbd></small>
+          </button>
+          <button class="btn-verdict minor" onclick="setVerdict('minor_error')">
+            <span>Minor Deviation</span>
+            <small>Acceptable for density <kbd>2</kbd></small>
+          </button>
+          <button class="btn-verdict poor" onclick="setVerdict('poor_measurement')">
+            <span>Poor Outline</span>
+            <small>Pore missed / bad axis <kbd>3</kbd></small>
+          </button>
+          <button class="btn-verdict false" onclick="setVerdict('false_stoma')">
+            <span>False Stoma</span>
+            <small>Debris / artifact <kbd>4</kbd></small>
+          </button>
+        </div>
+
+        <div class="issue-checks" style="margin-top:12px;">
+          <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;">Flag Specific Inaccuracies:</span>
+          <label><input type="checkbox" id="iss-axis" onchange="markDirty()"> Axis misaligned with poles</label>
+          <label><input type="checkbox" id="iss-pore" onchange="markDirty()"> Pore aperture width inaccurate / missed</label>
+          <label><input type="checkbox" id="iss-blur" onchange="markDirty()"> Out of focus / edge blur</label>
+          <label><input type="checkbox" id="iss-trunc" onchange="markDirty()"> Truncated by crop edge</label>
+        </div>
+
+        <div style="margin-top:10px;">
+          <textarea id="decision-comment" placeholder="Optional notes (e.g. guard cell wall boundary unclear)..." oninput="markDirty()"></textarea>
+        </div>
+
+        <div style="margin-top:12px;">
+          <button class="save-btn" id="btn-save" onclick="saveDecision()">
+            <span>Save &amp; Next</span> <kbd style="color:#fff;border-color:rgba(255,255,255,0.4)">Enter</kbd>
+          </button>
+        </div>
+
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+          <button class="relabel-toggle-btn" id="btn-relabel" onclick="toggleRelabelCurrent()">
+            <span id="relabel-btn-icon">🏷️</span> <span id="relabel-btn-text">Send for Roboflow Relabeling</span> <kbd>R</kbd>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- View 2: Field Overview (Full Slide) -->
+  <section id="view-overview" hidden>
+    <aside class="slides-list" id="slides-container"></aside>
+    <div class="field-viewer">
+      <div class="field-header">
+        <strong id="cur-slide-name">6-3-C_AB_3.png</strong>
+        <span class="tag-pill" id="cur-slide-cyto">nat_4x</span>
+        <span class="tag-pill" id="cur-slide-side">abaxial</span>
+        <span class="tag-pill" style="background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)">Clean Vector Tiled Overlay</span>
+        <div class="spacer"></div>
+        <button id="btn-relabel-slide" class="slide-relabel-btn" onclick="toggleSlideRelabel()">
+          <span id="slide-relabel-icon">🏷️</span> <span id="slide-relabel-text">Flag Slide for Roboflow</span>
+        </button>
+      </div>
+      <div class="field-canvas-wrap">
+        <img id="field-img" src="" alt="Micrograph field">
+      </div>
+    </div>
+  </section>
+
+  <!-- View 3: Precision Analytics Dashboard -->
+  <section id="view-analytics" hidden>
+    <div class="dash-header">
+      <h2>📊 Stomata Measurement Precision Analytics</h2>
+      <p style="color:var(--muted);margin:0;">Real-time accuracy benchmarking across cytotypes and leaf sides based on human review and digital calipers.</p>
+    </div>
+
+    <div class="dash-grid">
+      <div class="stat-box">
+        <span class="title">Total Reviewed</span>
+        <span class="num" id="stat-reviewed">0</span>
+        <span class="sub" id="stat-reviewed-pct">0% of review set</span>
+      </div>
+      <div class="stat-box">
+        <span class="title">High Precision Rate</span>
+        <span class="num" style="color:var(--verdict-high)" id="stat-high-pct">0%</span>
+        <span class="sub">Valid for ploidy sizing</span>
+      </div>
+      <div class="stat-box">
+        <span class="title">Major Axis Mean Abs Error</span>
+        <span class="num" style="color:var(--maj-yellow)" id="stat-mae-maj">--</span>
+        <span class="sub">Model vs Human Caliper</span>
+      </div>
+      <div class="stat-box">
+        <span class="title">Pore Width Mean Abs Error</span>
+        <span class="num" style="color:var(--pore-cyan)" id="stat-mae-pore">--</span>
+        <span class="sub">Aperture precision</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Measurement Discrepancy Benchmarks (Model vs Human Digital Caliper)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Morphometric Trait</th>
+            <th class="num">Caliper Comparisons</th>
+            <th class="num">Mean Abs Error (MAE)</th>
+            <th class="num">Mean Bias (Model - Human)</th>
+            <th class="num">Max Deviation</th>
+          </tr>
+        </thead>
+        <tbody id="caliper-benchmark-table">
+          <tr><td colspan="5" style="color:var(--muted);text-align:center;">No caliper measurements recorded yet. Use the digital caliper tool to benchmark precision.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <h3>Active Reviewers &amp; Audit Progress</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Reviewer</th>
+            <th class="num">Stomata Reviewed</th>
+            <th class="num">Median Time / Stoma</th>
+            <th>Last Active</th>
+          </tr>
+        </thead>
+        <tbody id="reviewers-table">
+          <tr><td colspan="4" style="color:var(--muted);text-align:center;">Loading reviewer activity...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- View 4: Guide & Help -->
+  <section id="view-help" hidden>
+    <h2>🌿 Reviewer Guide &amp; Digital Calipers</h2>
+    <p style="color:var(--muted)">How to inspect and verify stomata measurements to benchmark precision for ploidy sizing.</p>
+
+    <div class="help-section">
+      <h3>1. Anatomical Measurement Dimensions</h3>
+      <div class="help-grid">
+        <div class="card">
+          <strong style="color:var(--maj-yellow)">📏 Major Axis (Full Stoma Length)</strong>
+          <p style="font-size:12.5px;color:var(--muted)">Spans between the two guard cell junctions (poles). Key trait for ploidy level discrimination (diploids 2x vs tetraploids 4x).</p>
+        </div>
+        <div class="card">
+          <strong style="color:var(--min-orange)">📏 Minor Axis (Full Stoma Width)</strong>
+          <p style="font-size:12.5px;color:var(--muted)">Cross-sectional diameter perpendicular to the major axis at the centroid. Includes both guard cells and the pore.</p>
+        </div>
+        <div class="card">
+          <strong style="color:var(--pore-cyan)">🔵 Central Pore Aperture Width</strong>
+          <p style="font-size:12.5px;color:var(--muted)">Inner central opening diameter measured along the minor axis. Critical proxy for stomatal conductance ($g_{\text{smax}}$).</p>
+        </div>
+        <div class="card">
+          <strong style="color:var(--gc-magenta)">🟢 Guard Cell Width</strong>
+          <p style="font-size:12.5px;color:var(--muted)">Radial thickness of one guard cell: $\frac{L_{\text{minor}} - P_{\text{width}}}{2}$. Turgor regulation trait.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3>2. Keyboard Shortcuts</h3>
+      <div class="card">
+        <table style="font-size:13px;">
+          <tr><td><kbd>1</kbd></td><td>High Precision (Suitable for ploidy sizing)</td></tr>
+          <tr><td><kbd>2</kbd></td><td>Minor Deviation (Acceptable for density)</td></tr>
+          <tr><td><kbd>3</kbd></td><td>Poor Measurement (Bad outline/pore missed)</td></tr>
+          <tr><td><kbd>4</kbd></td><td>False Stoma (Debris / non-stoma)</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>Save decision and advance to next stoma</td></tr>
+          <tr><td><kbd>C</kbd></td><td>Toggle Digital Caliper mode</td></tr>
+          <tr><td><kbd>X</kbd></td><td>Toggle CLAHE contrast filter</td></tr>
+          <tr><td><kbd>Space</kbd></td><td>Hold to peek at raw micrograph (hides overlays)</td></tr>
+          <tr><td><kbd>R</kbd></td><td>Toggle Roboflow Relabeling flag for current crop</td></tr>
+          <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Navigate previous / next stoma</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// Application State
+const S = {
+  items: [],
+  filtered: [],
+  slides: [],
+  idx: 0,
+  cur: null,
+  img: null,
+  decisions: {},
+  curVerdict: null,
+  dirty: false,
+  t0: 0,
+  caliperMode: false,
+  caliperStart: null,
+  caliperEnd: null,
+  isDrawingCaliper: false,
+  zoom: 1.5,
+  panX: 0,
+  panY: 0,
+  isPanning: false,
+  panStart: {x: 0, y: 0},
+  peekRaw: false,
+  clahe: false,
+  relabelSet: new Set(),
+  currentUser: 'jakub',
+  currentSlideIdx: 0
+};
+
+const PX_TO_UM = 50.0 / 451.3958;
+
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function getReviewer() {
+  return S.currentUser || 'jakub';
+}
+
+async function init() {
+  try {
+    const res = await fetch('/api/state');
+    const data = await res.json();
+    S.items = data.items || [];
+    S.slides = data.slides || [];
+    S.decisions = data.decisions || {};
+    S.relabelSet = new Set(data.relabel_items || []);
+    S.currentUser = (data.current_user || 'jakub').toLowerCase();
+    $('#reviewer-name').textContent = S.currentUser;
+    
+    updateRelabelCount();
+    applyFilters();
+    renderSlidesList();
+    
+    // Initialize progress immediately
+    const doneCount = Object.keys(S.decisions).filter(k => S.decisions[k][S.currentUser]).length;
+    const totalCount = S.items.length || 300;
+    $('#prog-txt').textContent = `${doneCount} / ${totalCount}`;
+    $('#prog-bar').style.width = `${Math.round((doneCount / totalCount) * 100)}%`;
+    refreshProgress();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const itemParam = urlParams.get('item') || urlParams.get('crop');
+    if (itemParam) {
+      const targetIdx = S.filtered.findIndex(it => String(it.crop_id) === itemParam || it.id.includes(itemParam));
+      if (targetIdx !== -1) {
+        loadItem(targetIdx);
+      } else if (S.filtered.length > 0) {
+        loadItem(0);
+      }
+    } else if (S.filtered.length > 0) {
+      loadItem(0);
+    }
+  } catch (err) {
+    console.error('Failed to load state:', err);
+    toast('Error loading review dataset.');
+  }
+}
+
+function applyFilters() {
+  const cyto = $('#filter-cytotype').value;
+  const suit = $('#filter-suitability').value;
+  
+  S.filtered = S.items.filter(it => {
+    if (cyto !== 'all' && it.cytotype !== cyto) return false;
+    if (suit === 'suitable' && !it.is_suitable_for_ploidy_sizing) return false;
+    if (suit === 'unsuitable' && it.is_suitable_for_ploidy_sizing) return false;
+    return true;
+  });
+  
+  updateQueue();
+  if (S.filtered.length > 0) {
+    loadItem(0);
+  }
+}
+
+function updateQueue() {
+  const c = $('#queue-container');
+  const rev = getReviewer();
+  
+  c.innerHTML = S.filtered.map((it, idx) => {
+    const d = (S.decisions[it.id] || {})[rev];
+    const vClass = d ? d.verdict : '';
+    const isAct = idx === S.idx ? 'active' : '';
+    const suitBadge = it.is_suitable_for_ploidy_sizing ? '<span class="tag-pill suitable">Ploidy</span>' : '';
+    const relabelBadge = S.relabelSet && S.relabelSet.has(it.id) ? '<span class="relabel-badge" title="Flagged for Roboflow">🏷️ Relabel</span>' : '';
+    
+    return `<div class="queue-item ${isAct}" onclick="loadItem(${idx})">
+      <span class="v-dot ${vClass}"></span>
+      <span style="font-family:'JetBrains Mono';font-size:11px;">#${String(it.crop_id || (idx+1)).padStart(3,'0')}</span>
+      <span>${it.plant_ID || 'crop'}${it.total_stomata_in_crop > 1 ? ` <small style="color:var(--muted);font-size:10px;">(${it.total_stomata_in_crop} st.)</small>` : ''}</span>
+      ${relabelBadge}
+      ${suitBadge}
+    </div>`;
+  }).join('');
+}
+
+function loadItem(idx) {
+  if (idx < 0 || idx >= S.filtered.length) return;
+  if (S.dirty && !confirm('Discard unsaved review changes?')) return;
+  
+  S.idx = idx;
+  S.cur = S.filtered[idx];
+  S.dirty = false;
+  S.t0 = Date.now();
+  S.caliperStart = null;
+  S.caliperEnd = null;
+  $('#caliper-hud').hidden = true;
+  
+  // Clear previous image immediately so old image is never stuck during loading!
+  S.img = null;
+  draw();
+  
+  updateQueue();
+  updateRelabelButtonState();
+  
+  // Update Inspector
+  $('#m-plant').textContent = S.cur.plant_ID || 'Unknown';
+  $('#m-cyto').textContent = S.cur.cytotype || 'Unknown';
+  $('#m-side').textContent = S.cur.leaf_side || 'Unknown';
+  $('#m-focus').textContent = S.cur.focus_score ? `${S.cur.focus_score} /100` : '--';
+  
+  // Border truncation check
+  const poly = S.cur.vectors?.stoma_poly || [];
+  const W = S.cur.crop_w || 640;
+  const H = S.cur.crop_h || 640;
+  const isPrimaryEdge = poly.some(([x, y]) => x <= 3 || y <= 3 || x >= W - 3 || y >= H - 3);
+  
+  if (isPrimaryEdge) {
+    $('#m-suitable').textContent = 'Border Truncated (Density only)';
+    $('#m-suitable').style.color = '#f59e0b';
+  } else {
+    $('#m-suitable').textContent = S.cur.is_suitable_for_ploidy_sizing ? 'Yes (Ploidy)' : 'No (Density)';
+    $('#m-suitable').style.color = S.cur.is_suitable_for_ploidy_sizing ? 'var(--stoma-green)' : 'var(--muted)';
+  }
+  
+  $('#val-maj').textContent = `${S.cur.major_axis_um} µm`;
+  $('#val-min').textContent = `${S.cur.minor_axis_um} µm`;
+  $('#val-pore').textContent = `${S.cur.pore_width_um} µm`;
+  $('#val-gc').textContent = `${S.cur.guard_cell_width_um} µm`;
+  $('#val-ar').textContent = S.cur.aspect_ratio || '--';
+  $('#val-aperture').textContent = S.cur.aperture_ratio || '--';
+  
+  // Previous Decision
+  const rev = getReviewer();
+  const prev = (S.decisions[S.cur.id] || {})[rev];
+  setVerdict(prev ? prev.verdict : null, false);
+  $('#iss-axis').checked = prev?.issues?.includes('axis_misaligned') || false;
+  $('#iss-pore').checked = prev?.issues?.includes('pore_inaccurate') || false;
+  $('#iss-blur').checked = prev?.issues?.includes('out_of_focus') || false;
+  $('#iss-trunc').checked = prev ? prev.issues?.includes('truncated') : isPrimaryEdge;
+  $('#decision-comment').value = prev?.comment || '';
+  
+  // Load Crop Image
+  S.loadError = false;
+  const img = new Image();
+  img.onload = () => {
+    S.img = img;
+    S.loadError = false;
+    resizeCanvas();
+    const cv = $('#cv');
+    const fitZoom = Math.min((cv.width * 0.88) / img.naturalWidth, (cv.height * 0.88) / img.naturalHeight);
+    S.zoom = Math.max(1.0, fitZoom);
+    S.panX = 0;
+    S.panY = 0;
+    draw();
+  };
+  img.onerror = () => {
+    console.error('Failed to load crop image:', S.cur.img_url);
+    if (S.cur.crop_url && img.src !== S.cur.crop_url && !img.src.endsWith(S.cur.crop_url)) {
+      img.src = S.cur.crop_url;
+    } else {
+      S.loadError = true;
+      toast('Image load error for this crop.');
+      draw();
+    }
+  };
+  img.src = S.cur.img_url || S.cur.crop_url;
+}
+
+async function toggleRelabelCurrent() {
+  if (!S.cur) return;
+  const isFlagged = S.relabelSet.has(S.cur.id);
+  const nextState = !isFlagged;
+  
+  try {
+    const res = await fetch('/api/relabel', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: S.cur.id,
+        relabel: nextState,
+        comment: $('#decision-comment').value.trim()
+      })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      if (nextState) {
+        S.relabelSet.add(S.cur.id);
+        toast('🏷️ Stoma crop queued for Roboflow relabeling.');
+      } else {
+        S.relabelSet.delete(S.cur.id);
+        toast('Removed from Roboflow relabeling queue.');
+      }
+      updateRelabelButtonState();
+      updateRelabelCount();
+      updateQueue();
+    }
+  } catch (err) {
+    toast('Error updating relabel queue.');
+  }
+}
+
+function updateRelabelButtonState() {
+  const btn = $('#btn-relabel');
+  if (!btn || !S.cur) return;
+  const isFlagged = S.relabelSet.has(S.cur.id);
+  btn.classList.toggle('active', isFlagged);
+  $('#relabel-btn-icon').textContent = isFlagged ? '✓' : '🏷️';
+  $('#relabel-btn-text').textContent = isFlagged ? 'Flagged for Relabeling' : 'Send for Roboflow Relabeling';
+}
+
+function updateRelabelCount() {
+  const el = $('#relabel-count');
+  if (el) el.textContent = S.relabelSet.size;
+  const packBtn = $('#btn-pack-roboflow');
+  if (packBtn) {
+    packBtn.classList.toggle('has-items', S.relabelSet.size > 0);
+  }
+}
+
+async function toggleSlideRelabel() {
+  const curSlide = S.slides[S.currentSlideIdx || 0];
+  if (!curSlide) return;
+  const slideId = curSlide.stem;
+  const isFlagged = S.relabelSet.has(slideId);
+  const nextState = !isFlagged;
+  
+  try {
+    const res = await fetch('/api/relabel', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: slideId,
+        relabel: nextState,
+        comment: `Full micrograph slide ${curSlide.image_name}`
+      })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      if (nextState) {
+        S.relabelSet.add(slideId);
+        toast(`🏷️ Slide ${curSlide.stem} queued for Roboflow.`);
+      } else {
+        S.relabelSet.delete(slideId);
+        toast(`Slide ${curSlide.stem} removed from queue.`);
+      }
+      updateSlideRelabelButtonState();
+      updateRelabelCount();
+    }
+  } catch (err) {
+    toast('Error updating slide relabel.');
+  }
+}
+
+function updateSlideRelabelButtonState() {
+  const btn = $('#btn-relabel-slide');
+  const curSlide = S.slides[S.currentSlideIdx || 0];
+  if (!btn || !curSlide) return;
+  const isFlagged = S.relabelSet.has(curSlide.stem);
+  btn.classList.toggle('active', isFlagged);
+  $('#slide-relabel-icon').textContent = isFlagged ? '✓' : '🏷️';
+  $('#slide-relabel-text').textContent = isFlagged ? 'Slide Flagged for Roboflow' : 'Flag Slide for Roboflow';
+}
+
+function resizeCanvas() {
+  const cv = $('#cv');
+  const wrap = $('#canvas-wrap');
+  if (!cv || !wrap) return;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (w > 0 && h > 0 && (cv.width !== w || cv.height !== h)) {
+    cv.width = w;
+    cv.height = h;
+  }
+}
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  draw();
+});
+
+function nav(delta) {
+  loadItem(S.idx + delta);
+}
+
+function setVerdict(v, markDirtyFlag = true) {
+  S.curVerdict = v;
+  $$('.btn-verdict').forEach(b => b.classList.remove('active'));
+  if (v) {
+    const map = { high_precision: 'high', minor_error: 'minor', poor_measurement: 'poor', false_stoma: 'false' };
+    const btn = $(`.btn-verdict.${map[v]}`);
+    if (btn) btn.classList.add('active');
+  }
+  if (markDirtyFlag) S.dirty = true;
+}
+
+function markDirty() { S.dirty = true; }
+
+async function saveDecision() {
+  if (!S.cur) return;
+  const rev = getReviewer();
+  if (!rev) { toast('Please enter your reviewer name.'); return; }
+  
+  const issues = [];
+  if ($('#iss-axis').checked) issues.push('axis_misaligned');
+  if ($('#iss-pore').checked) issues.push('pore_inaccurate');
+  if ($('#iss-blur').checked) issues.push('out_of_focus');
+  if ($('#iss-trunc').checked) issues.push('truncated');
+  
+  const payload = {
+    id: S.cur.id,
+    reviewer: rev,
+    verdict: S.curVerdict || 'high_precision',
+    precision_score: S.curVerdict === 'high_precision' ? 5 : (S.curVerdict === 'minor_error' ? 3 : 1),
+    issues: issues,
+    comment: $('#decision-comment').value.trim(),
+    seconds: Math.round((Date.now() - S.t0) / 1000.0),
+    caliper: S.curCaliper || {}
+  };
+  
+  try {
+    const res = await fetch('/api/decision', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const d = await res.json();
+    if (d.ok) {
+      S.decisions.setdefault = S.decisions.setdefault || {};
+      if (!S.decisions[S.cur.id]) S.decisions[S.cur.id] = {};
+      S.decisions[S.cur.id][rev] = d.saved;
+      S.dirty = false;
+      toast('Decision saved ✓');
+      updateQueue();
+      refreshProgress();
+      nav(1);
+    }
+  } catch (err) {
+    console.error('Save failed:', err);
+    toast('Error saving decision.');
+  }
+}
+
+// ── Drawing Engine ─────────────────────────────────────────────────────────────
+function draw() {
+  resizeCanvas();
+  const cv = $('#cv');
+  const ctx = cv.getContext('2d');
+  const img = S.img;
+  if (!img) {
+    const W = cv.width;
+    const H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#111622';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = S.loadError ? '#f87171' : '#8b9bb4';
+    ctx.font = '500 13px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(S.loadError ? '⚠️ Image load error. Click Next/Prev or reload.' : '⏳ Loading high-resolution stoma crop...', W / 2, H / 2);
+    return;
+  }
+  
+  const W = cv.width;
+  const H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  
+  ctx.save();
+  // Transform
+  ctx.translate(W / 2 + S.panX, H / 2 + S.panY);
+  ctx.scale(S.zoom, S.zoom);
+  ctx.translate(-img.naturalWidth / 2, -img.naturalHeight / 2);
+  
+  // Contrast filter
+  if (S.clahe) {
+    ctx.filter = 'contrast(160%) brightness(105%)';
+  }
+  
+  ctx.drawImage(img, 0, 0);
+  ctx.filter = 'none';
+  
+  if (S.peekRaw) {
+    ctx.restore();
+    return;
+  }
+  
+  const v = S.cur?.vectors;
+  if (v) {
+    // 0. Companion Stomata in this Crop (secondary detections)
+    const showCompanions = $('#chk-companion') ? $('#chk-companion').checked : true;
+    if (showCompanions && v.companion_stomata && v.companion_stomata.length > 0) {
+      v.companion_stomata.forEach(cs => {
+        const isCsEdge = cs.stoma_poly && cs.stoma_poly.some(([x, y]) => x <= 3 || y <= 3 || x >= 637 || y >= 637);
+        
+        // Outline
+        if ($('#chk-stoma-outline').checked && cs.stoma_poly && cs.stoma_poly.length > 2) {
+          ctx.beginPath();
+          cs.stoma_poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+          ctx.closePath();
+          ctx.strokeStyle = isCsEdge ? 'rgba(245, 158, 11, 0.75)' : 'rgba(74, 222, 128, 0.75)';
+          ctx.lineWidth = 1.8 / S.zoom;
+          ctx.setLineDash([4 / S.zoom, 3 / S.zoom]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = isCsEdge ? 'rgba(245, 158, 11, 0.08)' : 'rgba(74, 222, 128, 0.08)';
+          ctx.fill();
+        }
+        
+        // Pore: border stomata often have degenerate synthetic border slivers
+        if ($('#chk-pore-outline').checked && cs.pore_poly && cs.pore_poly.length > 2) {
+          const isPoreBorderSliver = cs.pore_poly.some(([x, y]) => x <= 3 || y <= 3 || x >= 637 || y >= 637);
+          ctx.beginPath();
+          cs.pore_poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+          ctx.closePath();
+          ctx.strokeStyle = isPoreBorderSliver ? 'rgba(239, 68, 68, 0.45)' : 'rgba(6, 182, 212, 0.75)';
+          ctx.lineWidth = 1.6 / S.zoom;
+          if (isPoreBorderSliver) ctx.setLineDash([2 / S.zoom, 2 / S.zoom]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = isPoreBorderSliver ? 'rgba(239, 68, 68, 0.12)' : 'rgba(6, 182, 212, 0.18)';
+          ctx.fill();
+        }
+        
+        // Label
+        if ($('#chk-labels').checked) {
+          ctx.font = `${Math.max(9, 11 / S.zoom)}px Inter, sans-serif`;
+          ctx.fillStyle = isCsEdge ? 'rgba(245, 158, 11, 0.85)' : 'rgba(255, 255, 255, 0.75)';
+          ctx.fillText(`stoma #${cs.stoma_idx}${isCsEdge ? ' (edge)' : ` (${cs.major_axis_um} µm)`}`, cs.cx - 20, cs.cy);
+        }
+      });
+    }
+
+    // 1. Stoma Outline (Green)
+    if ($('#chk-stoma-outline').checked && v.stoma_poly && v.stoma_poly.length > 2) {
+      ctx.beginPath();
+      v.stoma_poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+      ctx.closePath();
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2.2 / S.zoom;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.12)';
+      ctx.fill();
+    }
+    
+    // 2. Pore Outline (Cyan)
+    if ($('#chk-pore-outline').checked && v.pore_poly && v.pore_poly.length > 2) {
+      ctx.beginPath();
+      v.pore_poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+      ctx.closePath();
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 2.0 / S.zoom;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.25)';
+      ctx.fill();
+    }
+    
+    // 3. Major Axis Line (Yellow)
+    if ($('#chk-major-axis').checked && v.major_line) {
+      const [[x1, y1], [x2, y2]] = v.major_line;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 2.2 / S.zoom;
+      ctx.stroke();
+      
+      // Ticks
+      (v.major_ticks || []).forEach(([[tx1, ty1], [tx2, ty2]]) => {
+        ctx.beginPath();
+        ctx.moveTo(tx1, ty1);
+        ctx.lineTo(tx2, ty2);
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 2.0 / S.zoom;
+        ctx.stroke();
+      });
+      
+      // Dimension Label
+      if ($('#chk-labels').checked) {
+        ctx.font = `bold ${Math.max(10, 13 / S.zoom)}px Inter, sans-serif`;
+        ctx.fillStyle = '#fef08a';
+        ctx.fillText(`${S.cur.major_axis_um} µm`, (x1 + x2) / 2 + 6, (y1 + y2) / 2);
+      }
+    }
+    
+    // 4. Minor Axis Line (Orange)
+    if ($('#chk-minor-axis').checked && v.minor_line) {
+      const [[x1, y1], [x2, y2]] = v.minor_line;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 2.0 / S.zoom;
+      ctx.stroke();
+      
+      // Pore Width Line (Cyan)
+      if (v.pore_line) {
+        const [[px1, py1], [px2, py2]] = v.pore_line;
+        ctx.beginPath();
+        ctx.moveTo(px1, py1);
+        ctx.lineTo(px2, py2);
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 3.2 / S.zoom;
+        ctx.stroke();
+      }
+      
+      // Minor Ticks
+      (v.minor_ticks || []).forEach(([[tx1, ty1], [tx2, ty2]]) => {
+        ctx.beginPath();
+        ctx.moveTo(tx1, ty1);
+        ctx.lineTo(tx2, ty2);
+        ctx.strokeStyle = '#d946ef';
+        ctx.lineWidth = 1.8 / S.zoom;
+        ctx.stroke();
+      });
+      
+      if ($('#chk-labels').checked && v.pore_line) {
+        const [[px1, py1], [px2, py2]] = v.pore_line;
+        ctx.font = `bold ${Math.max(10, 12 / S.zoom)}px Inter, sans-serif`;
+        ctx.fillStyle = '#67e8f9';
+        ctx.fillText(`${S.cur.pore_width_um} µm`, px2 + 6, py2 + 2);
+      }
+    }
+  }
+  
+  // 5. Virtual Caliper (Lime)
+  if (S.caliperStart && S.caliperEnd) {
+    const p1 = S.caliperStart;
+    const p2 = S.caliperEnd;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = '#a3e635';
+    ctx.lineWidth = 2.4 / S.zoom;
+    ctx.setLineDash([4 / S.zoom, 3 / S.zoom]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Crosshairs
+    [p1, p2].forEach(p => {
+      const r = 5 / S.zoom;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#a3e635';
+      ctx.fill();
+    });
+  }
+  
+  ctx.restore();
+}
+
+// ── Interactive Caliper & Pan/Zoom Handlers ────────────────────────────────────
+const cvWrap = $('#canvas-wrap');
+const cv = $('#cv');
+
+function screenToCrop(clientX, clientY) {
+  const rect = cv.getBoundingClientRect();
+  const screenX = clientX - rect.left;
+  const screenY = clientY - rect.top;
+  const W = cv.width;
+  const H = cv.height;
+  const img = S.img;
+  if (!img) return {x: 0, y: 0};
+  
+  const cropX = (screenX - (W / 2 + S.panX)) / S.zoom + img.naturalWidth / 2;
+  const cropY = (screenY - (H / 2 + S.panY)) / S.zoom + img.naturalHeight / 2;
+  return {x: cropX, y: cropY};
+}
+
+cvWrap.addEventListener('mousedown', e => {
+  if (S.caliperMode) {
+    S.isDrawingCaliper = true;
+    S.caliperStart = screenToCrop(e.clientX, e.clientY);
+    S.caliperEnd = S.caliperStart;
+    draw();
+  } else {
+    S.isPanning = true;
+    S.panStart = { x: e.clientX - S.panX, y: e.clientY - S.panY };
+    cvWrap.classList.add('panning');
+  }
+});
+
+window.addEventListener('mousemove', e => {
+  if (S.isDrawingCaliper) {
+    S.caliperEnd = screenToCrop(e.clientX, e.clientY);
+    updateCaliperHud();
+    draw();
+  } else if (S.isPanning) {
+    S.panX = e.clientX - S.panStart.x;
+    S.panY = e.clientY - S.panStart.y;
+    draw();
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (S.isDrawingCaliper) {
+    S.isDrawingCaliper = false;
+    updateCaliperHud();
+  }
+  if (S.isPanning) {
+    S.isPanning = false;
+    cvWrap.classList.remove('panning');
+  }
+});
+
+cvWrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+  S.zoom = Math.min(8.0, Math.max(0.6, S.zoom * zoomFactor));
+  draw();
+}, { passive: false });
+
+function toggleCaliper() {
+  S.caliperMode = !S.caliperMode;
+  $('#btn-caliper').classList.toggle('active', S.caliperMode);
+  cvWrap.classList.toggle('caliper-mode', S.caliperMode);
+  if (!S.caliperMode) {
+    $('#caliper-hud').hidden = true;
+    S.caliperStart = null;
+    S.caliperEnd = null;
+    draw();
+  }
+}
+
+function toggleClahe() {
+  S.clahe = !S.clahe;
+  $('#btn-clahe').classList.toggle('active', S.clahe);
+  draw();
+}
+
+function updateCaliperHud() {
+  if (!S.caliperStart || !S.caliperEnd) return;
+  const dx = S.caliperEnd.x - S.caliperStart.x;
+  const dy = S.caliperEnd.y - S.caliperStart.y;
+  const distPx = Math.sqrt(dx * dx + dy * dy);
+  const distUm = distPx * PX_TO_UM;
+  
+  $('#caliper-len').textContent = `${distUm.toFixed(2)} µm`;
+  $('#caliper-px').textContent = `${distPx.toFixed(1)} px`;
+  $('#caliper-hud').hidden = false;
+  
+  S.curCaliperDist = distUm;
+}
+
+function applyCaliperTo(traitKey) {
+  if (!S.curCaliperDist) return;
+  S.curCaliper = S.curCaliper || { measured: true };
+  if (traitKey === 'major') S.curCaliper.major_axis_um = round2(S.curCaliperDist);
+  if (traitKey === 'minor') S.curCaliper.minor_axis_um = round2(S.curCaliperDist);
+  if (traitKey === 'pore') S.curCaliper.pore_width_um = round2(S.curCaliperDist);
+  
+  toast(`Ground-truth ${traitKey} caliper recorded: ${S.curCaliperDist.toFixed(2)} µm`);
+  markDirty();
+}
+
+function resetCaliper() {
+  S.caliperStart = null;
+  S.caliperEnd = null;
+  S.curCaliper = null;
+  $('#caliper-hud').hidden = true;
+  draw();
+}
+
+function round2(v) { return Math.round(v * 100) / 100; }
+
+// Keyboard Shortcuts
+window.addEventListener('keydown', e => {
+  if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) return;
+  
+  if (e.key === '1') { setVerdict('high_precision'); }
+  else if (e.key === '2') { setVerdict('minor_error'); }
+  else if (e.key === '3') { setVerdict('poor_measurement'); }
+  else if (e.key === '4') { setVerdict('false_stoma'); }
+  else if (e.key === 'Enter') { saveDecision(); }
+  else if (e.key === 'ArrowLeft') { nav(-1); }
+  else if (e.key === 'ArrowRight') { nav(1); }
+  else if (e.key.toLowerCase() === 'c') { toggleCaliper(); }
+  else if (e.key.toLowerCase() === 'x') { toggleClahe(); }
+  else if (e.key.toLowerCase() === 'r') { toggleRelabelCurrent(); }
+  else if (e.code === 'Space') {
+    e.preventDefault();
+    if (!S.peekRaw) { S.peekRaw = true; draw(); }
+  }
+});
+
+window.addEventListener('keyup', e => {
+  if (e.code === 'Space') {
+    S.peekRaw = false;
+    draw();
+  }
+});
+
+// View Switcher
+function switchView(mode) {
+  $$('.tabs button').forEach(b => b.classList.remove('active'));
+  $('#tab-' + mode).classList.add('active');
+  
+  $('#view-crop').hidden = (mode !== 'crop');
+  $('#view-overview').hidden = (mode !== 'overview');
+  $('#view-analytics').hidden = (mode !== 'analytics');
+  $('#view-help').hidden = (mode !== 'help');
+  
+  if (mode === 'overview') {
+    if (S.cur) {
+      const matchIdx = S.slides.findIndex(sl =>
+        (S.cur.image_name && sl.image_name === S.cur.image_name) ||
+        (S.cur.stem && sl.stem === S.cur.stem) ||
+        (S.cur.plant_ID && sl.plant_ID === S.cur.plant_ID)
+      );
+      if (matchIdx !== -1) {
+        selectSlide(matchIdx);
+      }
+    }
+    updateSlideRelabelButtonState();
+  }
+  
+  if (mode === 'analytics') loadAnalytics();
+}
+
+// Overview View (Full Slide)
+function renderSlidesList() {
+  const c = $('#slides-container');
+  c.innerHTML = S.slides.map((sl, idx) => `
+    <div class="slide-card ${idx===0?'active':''}" onclick="selectSlide(${idx})">
+      <strong>${sl.plant_ID || sl.stem}</strong>
+      <div class="sub">${sl.stem}</div>
+      <div class="sub">${sl.leaf_side} · ${sl.image_name}</div>
+    </div>
+  `).join('');
+  if (S.slides.length > 0) selectSlide(0);
+}
+
+function selectSlide(idx) {
+  S.currentSlideIdx = idx;
+  $$('.slide-card').forEach((el, i) => el.classList.toggle('active', i === idx));
+  const sl = S.slides[idx];
+  if (!sl) return;
+  
+  $('#cur-slide-name').textContent = sl.image_name;
+  $('#cur-slide-cyto').textContent = sl.plant_ID || sl.stem;
+  $('#cur-slide-side').textContent = sl.leaf_side || '';
+  
+  const imgEl = $('#field-img');
+  imgEl.style.opacity = '0.35';
+  imgEl.onload = () => { imgEl.style.opacity = '1'; };
+  imgEl.src = sl.img_url || sl.overview_url;
+  
+  updateSlideRelabelButtonState();
+}
+
+// Analytics View
+async function loadAnalytics() {
+  try {
+    const res = await fetch('/api/progress');
+    const data = await res.json();
+    
+    $('#stat-reviewed').textContent = data.done_items;
+    $('#stat-reviewed-pct').textContent = `${data.completion_pct}% of review set`;
+    
+    const vTotal = Math.max(1, data.done_items);
+    const highPct = Math.round((data.verdicts.high_precision || 0) / vTotal * 100);
+    $('#stat-high-pct').textContent = `${highPct}%`;
+    
+    const pMaj = data.precision_benchmarks?.major_axis;
+    const pPore = data.precision_benchmarks?.pore_width;
+    
+    $('#stat-mae-maj').textContent = pMaj?.mae_um ? `± ${pMaj.mae_um} µm` : '--';
+    $('#stat-mae-pore').textContent = pPore?.mae_um ? `± ${pPore.mae_um} µm` : '--';
+    
+    // Benchmark table
+    const pb = data.precision_benchmarks || {};
+    const rows = [
+      { name: 'Major Axis (Stoma Length)', ...pb.major_axis },
+      { name: 'Minor Axis (Stoma Width)', ...pb.minor_axis },
+      { name: 'Central Pore Width (Aperture)', ...pb.pore_width }
+    ];
+    
+    $('#caliper-benchmark-table').innerHTML = rows.map(r => `
+      <tr>
+        <td><strong>${r.name}</strong></td>
+        <td class="num">${r.count || 0}</td>
+        <td class="num">${r.mae_um ? `± ${r.mae_um} µm` : '--'}</td>
+        <td class="num">${r.mean_bias_um ? `${r.mean_bias_um > 0 ? '+' : ''}${r.mean_bias_um} µm` : '--'}</td>
+        <td class="num">${r.max_err_um ? `${r.max_err_um} µm` : '--'}</td>
+      </tr>
+    `).join('');
+    
+    // Reviewers table
+    const revs = Object.entries(data.reviewers || {});
+    if (revs.length > 0) {
+      $('#reviewers-table').innerHTML = revs.map(([name, stat]) => `
+        <tr>
+          <td><strong>${name}</strong></td>
+          <td class="num">${stat.count}</td>
+          <td class="num">${stat.median_sec ? `${stat.median_sec}s` : '--'}</td>
+          <td>${stat.last_active || '--'}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    console.error('Analytics load failed:', err);
+  }
+}
+
+async function refreshProgress() {
+  try {
+    const res = await fetch('/api/progress');
+    const data = await res.json();
+    $('#prog-bar').style.width = `${data.completion_pct}%`;
+    $('#prog-txt').textContent = `${data.done_items} / ${data.total_items}`;
+  } catch (err) {}
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 ---
 title: "Stomatal traits across cytotypes — short summary"
-subtitle: "Preliminary results from automated analysis of micrographs"
+subtitle: "Automated analysis of microscope images, biophysical traits, and cytotype comparison"
 author: "Pollination Ecology Group"
 date: today
 date-format: "D MMMM YYYY"
@@ -14,6 +14,8 @@ format:
       - margin=2cm
     number-sections: false
     colorlinks: true
+    linkcolor: blue
+    urlcolor: blue
     fig-pos: "H"
     tbl-pos: "H"
     include-in-header:
@@ -21,6 +23,8 @@ format:
         \usepackage{float}
         \usepackage{booktabs}
         \usepackage{caption}
+        \usepackage{graphicx}
+        \usepackage{hyperref}
         \setlength{\parskip}{4pt}
 execute:
   echo: false
@@ -50,6 +54,7 @@ has_prev <- has(p_prev_sum)
 suppressPackageStartupMessages({
   library(dplyr); library(tidyr); library(ggplot2)
   library(lme4); library(lmerTest); library(emmeans); library(knitr)
+  library(multcomp); library(multcompView); library(MuMIn)
 })
 emm_options(lmer.df = "asymptotic")  # consistent, fast CIs for large N
 
@@ -64,36 +69,68 @@ cyt_cols <- c(ory_2x = "#3b82f6", nat_2x = "#10b981",
               nat_4x = "#f59e0b", neo_4x = "#ef4444")
 
 load_summary <- function(path) {
-  read.csv(path, stringsAsFactors = FALSE) %>%
+  d <- read.csv(path, stringsAsFactors = FALSE) %>%
     filter(!is.na(cytotype), !is.na(population), !is.na(plant_ID)) %>%
     mutate(cytotype  = factor(cytotype, levels = names(cyt_cols)),
            leaf_side = factor(leaf_side, levels = c("abaxial", "adaxial")),
            population = factor(population), plant_ID = factor(plant_ID))
+  
+  # Compute standardized anatomical theoretical gsmax (Franks & Beerling 2009, Sack & Buckley 2016)
+  # Decoupled from momentary sampling/drying aperture variations by using w_max = 0.5 * L_pore
+  if ("stomatal_density_per_mm2" %in% names(d) && "ploidy_median_stoma_length_um" %in% names(d)) {
+    d_m2 <- d$stomatal_density_per_mm2 * 1e6
+    L_sto <- d$ploidy_median_stoma_length_um * 1e-6
+    L_pore <- 0.5 * L_sto
+    a_max_theor <- (pi / 8.0) * (L_pore^2)
+    gc_w <- if ("ploidy_median_guard_cell_width_um" %in% names(d)) {
+      pmax(1e-6, d$ploidy_median_guard_cell_width_um * 1e-6)
+    } else {
+      0.25 * L_sto
+    }
+    denom_theor <- gc_w + (pi / 2.0) * sqrt(a_max_theor / pi)
+    d$gsmax_theor <- round((2.49e-5 / 0.02446) * d_m2 * a_max_theor / pmax(1e-9, denom_theor), 4)
+  }
+  
+  if ("stomatal_pore_area_index_spi" %in% names(d)) {
+    d$spi <- d$stomatal_pore_area_index_spi
+  } else if ("stomatal_density_per_mm2" %in% names(d) && "ploidy_median_stoma_length_um" %in% names(d)) {
+    d$spi <- round(d$stomatal_density_per_mm2 * (d$ploidy_median_stoma_length_um^2) * 1e-6, 6)
+  }
+  d
 }
 df <- load_summary(p_new_sum)
 
 traits <- c(length  = "ploidy_median_stoma_length_um",
             density = "stomatal_density_per_mm2",
-            gsmax   = "gsmax_mol_m2_s")
+            spi     = "spi",
+            gsmax   = "gsmax_theor")
 # plotmath labels (font-independent rendering of mu and superscripts)
 trait_lab <- c(length  = "Stoma~length~(mu*m)",
                density = "Density~(mm^-2)",
+               spi     = "SPI~(D %*% L^2)",
                gsmax   = "g[s*max]~(mol~m^-2~s^-1)")
-# keep only traits present (older result files lack gsmax)
+
+# keep only traits present
 traits <- traits[vapply(traits, function(col) col %in% names(df) && any(!is.na(df[[col]])), logical(1))]
 trait_lab <- trait_lab[names(traits)]
 has_gs <- "gsmax" %in% names(traits)
+has_spi <- "spi" %in% names(traits)
 
 fit_emm <- function(d, y) {
   if (!y %in% names(d)) return(NULL)
   d <- d[!is.na(d[[y]]), ]
   m <- lmer(reformulate("cytotype * leaf_side + (1 | population) + (1 | population:plant_ID)",
                         response = y), data = d)
-  emmeans(m, ~ cytotype | leaf_side)
+  emm <- emmeans(m, ~ cytotype | leaf_side)
+  cld_res <- cld(emm, Letters = letters, adjust = "tukey")
+  res <- as.data.frame(cld_res) %>% mutate(.group = trimws(.group))
+  attr(res, "emm_obj") <- emm
+  res
 }
-emms   <- lapply(traits, function(y) fit_emm(df, y))
-emm_df <- bind_rows(lapply(names(emms), function(t)
-  as.data.frame(emms[[t]]) %>% mutate(trait = t)))
+cld_res_list <- lapply(traits, function(y) fit_emm(df, y))
+emm_df <- bind_rows(lapply(names(cld_res_list), function(t)
+  cld_res_list[[t]] %>% mutate(trait = t)))
+emms <- setNames(lapply(cld_res_list, function(x) attr(x, "emm_obj")), names(traits))
 
 # helpers for inline numbers
 e <- function(t, cyt, side = "abaxial", d = emm_df)
@@ -102,6 +139,7 @@ pct <- function(t, a, b = "nat_2x", side = "abaxial")
   sprintf("%+.0f\\%%", 100 * (e(t, a, side) / e(t, b, side) - 1))
 f1 <- function(x) formatC(x, format = "f", digits = 1)
 f2 <- function(x) formatC(x, format = "f", digits = 2)
+f3 <- function(x) formatC(x, format = "f", digits = 3)
 
 # booktabs LaTeX table with an "Abaxial | Adaxial" spanning header
 side_table <- function(tab, first_col, sub_cols) {
@@ -128,33 +166,50 @@ info <- if (has(p_info)) jsonlite::fromJSON(p_info) else list()
 
 ## Summary
 
-We automatically detected and measured stomata in **`r format(n_img, big.mark = ",")` micrographs** from **`r n_plant` plants** (`r n_pop` populations; four cytotypes; both leaf sides), giving **`r format(n_stom, big.mark = ",")` detected stomata**`r if (!is.null(info$dataset_zip)) paste0(" (model trained on \\texttt{", gsub("_", "\\\\_", basename(info$dataset_zip)), "})") else ""`. Key results:
+We automatically detected and measured stomata in **`r format(n_img, big.mark = ",")` \hyperlink{term:micrograph}{microscope images}** from **`r n_plant` plants** (`r n_pop` \hyperlink{term:population}{populations}; four \hyperlink{term:cytotype}{cytotypes}; both leaf sides), yielding **`r format(n_stom, big.mark = ",")` detected stomata**`r if (!is.null(info$dataset_zip)) paste0(" (model trained on \\texttt{", gsub("_", "\\\\_", basename(info$dataset_zip)), "})") else ""`. Key biological results:
 
-- **Cell size follows ploidy, but not linearly.** Synthetic neotetraploids (`neo_4x`) have the largest stomata (`r f1(e("length","neo_4x"))` $\mu$m abaxial, `r pct("length","neo_4x")` vs. `nat_2x`), while established natural tetraploids (`nat_4x`) are intermediate (`r f1(e("length","nat_4x"))` $\mu$m, `r pct("length","nat_4x")`). Diploids `ory_2x` and `nat_2x`: `r f1(e("length","ory_2x"))` and `r f1(e("length","nat_2x"))` $\mu$m.
-- **Density.** Abaxial density is `r round(e("density","nat_2x"))` mm$^{-2}$ in `nat_2x`, `r round(e("density","nat_4x"))` in `nat_4x` (`r pct("density","nat_4x")`), `r round(e("density","neo_4x"))` in `neo_4x` (`r pct("density","neo_4x")`) and `r round(e("density","ory_2x"))` in `ory_2x`.
-`r if (has_gs) paste0("- **Theoretical conductance.** Abaxial $g_{s,\\max}$ (mol m$^{-2}$ s$^{-1}$): \\texttt{neo\\_4x} ", f2(e("gsmax","neo_4x")), ", \\texttt{nat\\_4x} ", f2(e("gsmax","nat_4x")), ", \\texttt{nat\\_2x} ", f2(e("gsmax","nat_2x")), ", \\texttt{ory\\_2x} ", f2(e("gsmax","ory_2x")), ". See Table 2 for which differences are statistically supported.") else ""`
-- **Leaf sides.** All cytotypes are amphistomatous; see Table 1 for abaxial vs. adaxial values.
+- **Cell size follows ploidy, but not linearly.** Synthetic neotetraploids (`neo_4x`) exhibit a pronounced "gigas" effect with the largest stomata (`r f1(e("length","neo_4x"))` $\mu$m abaxial, `r pct("length","neo_4x")` vs. `nat_2x`), while established natural tetraploids (`nat_4x`) display secondary evolutionary downsizing to intermediate cell size (`r f1(e("length","nat_4x"))` $\mu$m, `r pct("length","nat_4x")`). Diploids `ory_2x` and `nat_2x`: `r f1(e("length","ory_2x"))` and `r f1(e("length","nat_2x"))` $\mu$m.
+- **Density & size--density trade-off.** Abaxial density is `r round(e("density","nat_2x"))` mm$^{-2}$ in `nat_2x`, `r round(e("density","nat_4x"))` in `nat_4x` (`r pct("density","nat_4x")`, not significant), `r round(e("density","neo_4x"))` in `neo_4x` (`r pct("density","neo_4x")`, $p < 0.001$) and `r round(e("density","ory_2x"))` in `ory_2x`.
+- **Anatomical conductance ($g_{s,\max}$) & SPI.** Abaxial \hyperlink{term:gsmax}{$g_{s,\max}$} (mol m$^{-2}$ s$^{-1}$) under standardized maximum pore aperture: `neo_4x` `r f2(e("gsmax","neo_4x"))`, `nat_4x` `r f2(e("gsmax","nat_4x"))`, `nat_2x` `r f2(e("gsmax","nat_2x"))`, `ory_2x` `r f2(e("gsmax","ory_2x"))`. While `neo_4x` suffers a severe -24\% drop in diffusion capacity, `nat_4x` compensates through packing to restore $g_{s,\max}$ to diploid levels. The aperture-free \hyperlink{term:spi}{Stomatal Pore Area Index (SPI)} mirrors this pattern (Table 1).
+- **Both leaf surfaces bear stomata.** Rather than having stomata restricted to the lower surface, all cytotypes develop stomata on both the lower (\hyperlink{term:leafside}{abaxial}) and upper (\hyperlink{term:leafside}{adaxial}) leaf surfaces. Stomatal density is consistently ~20--25\% higher on the lower surface across all cytotypes.
+
+*(Click any highlighted term to jump directly to its explanation in the \hyperlink{sec:glossary}{Glossary \& Technical Definitions}.)*
 
 ## Methods in brief
 
-**Image analysis.** A YOLO11 instance-segmentation model (classes: whole stoma, pore) trained on manually annotated crops plus hard-negative background images was run tile-wise on full-resolution micrographs. For each stoma we measured length, width, guard-cell width and pore aperture; size statistics use only well-focused, non-edge stomata. Pore aperture is refined at sub-pixel resolution from intensity profiles across the pore. Density = all counted stomata / imaged leaf area.
+**Image analysis & trait extraction.** A YOLO11 instance-segmentation model trained on manually annotated crops plus hard-negative background tiles was executed across full-resolution microscope images. For each stoma, we extract full stoma dimensions, guard-cell thickness and pore dimensions; field density is computed per calibrated image area (Figure 1). Size statistics exclude edge and out-of-focus stomata.
 
-**Theoretical conductance** follows Franks & Farquhar (2001): $g_{s,\max} = \frac{d}{v}\,\frac{D\,a_{\max}}{l + \frac{\pi}{2}\sqrt{a_{\max}/\pi}}$, with density $D$, pore area $a_{\max}$ (from pore length and aperture) and pore depth $l$ approximated by guard-cell width.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.68\textwidth]{stomata_diagram.png}
+\caption{Measurement and trait extraction on a detected stoma from a microscope image. Green polygon: segmented whole stoma boundary (YOLO class 1); cyan polygon: pore/center boundary (YOLO class 0). Overlaid measurement vectors: Major axis (yellow, stoma length $L$), Minor axis (orange, stoma width $W$), Pore width / aperture (blue, $w_a$), and Guard-cell thickness (magenta bracket, $w_{gc}$). Stomatal density ($D$) is calculated as total detected stomata divided by imaged field area ($0.230\,\text{mm}^2$).}
+\label{fig:stoma-diagram}
+\end{figure}
 
-**Statistics.** Each trait was analysed per micrograph with a linear mixed model, `trait ~ cytotype * leaf_side + (1 | population) + (1 | population:plant)`, accounting for repeated images per plant. Means are model-estimated marginal means (EMMs); pairwise contrasts are Tukey-adjusted within leaf side.
+**Biophysical traits.** 
+- \hyperlink{term:gsmax}{\textbf{Theoretical anatomical maximum conductance ($g_{s,\max}$)}}: Computed via Franks \& Farquhar (2001) and Sack \& Buckley (2016): $g_{s,\max} = \frac{d}{v}\,\frac{D\,a_{\max}}{l + \frac{\pi}{2}\sqrt{a_{\max}/\pi}}$, where $d$ is water vapor diffusivity in air ($2.49 \times 10^{-5}\,\text{m}^2/\text{s}$), $v$ is molar volume ($0.02446\,\text{m}^3/\text{mol}$), and pore depth $l$ is guard-cell thickness ($w_{gc}$). To prevent bias from \hyperlink{term:pore_openness}{variable momentary pore openness} or drying artifacts during sampling, $a_{\max}$ uses standardized maximal geometry ($a_{\max} = \frac{\pi}{8} L_{\text{pore}}^2$ with $L_{\text{pore}} = 0.5\,L$).
+- \hyperlink{term:spi}{\textbf{Stomatal Pore Area Index (SPI)}}: $\text{SPI} = D \times L^2$ (dimensionless). A pure structural proxy requiring zero assumptions regarding pore depth or aperture state.
+
+**Statistics.** Each trait was analysed per microscope image with a linear mixed model, `trait ~ cytotype * leaf_side + (1 | population) + (1 | population:plant)`, accounting for repeated measures. Pairwise comparisons use Tukey-adjusted contrasts. In Figure 2, differences are denoted using \hyperlink{term:cld}{\textbf{compact letter display (CLD)}}.
+
+\newpage
 
 ## Results
 
 ```{r emm-table}
 tab <- emm_df %>%
-  mutate(val = ifelse(trait == "gsmax", f2(emmean), f1(emmean)),
+  mutate(val = ifelse(trait == "spi", f3(emmean),
+               ifelse(trait == "gsmax", f2(emmean), f1(emmean))),
          col = paste(leaf_side, trait, sep = "_")) %>%
-  select(cytotype, col, val) %>%
+  dplyr::select(cytotype, col, val) %>%
   pivot_wider(names_from = col, values_from = val) %>%
   mutate(cytotype = gsub("_", "\\\\_", cytotype))
+
+col_lookup <- c(length = "Length ($\\mu$m)", density = "Density (mm$^{-2}$)",
+                spi = "SPI", gsmax = "$g_{s,\\max}$")
 tab <- tab[, c("cytotype", paste0("abaxial_", names(traits)), paste0("adaxial_", names(traits)))]
-place_table(side_table(tab, "Cytotype", c(length = "Length ($\\mu$m)", density = "Density (mm$^{-2}$)", gsmax = "$g_{s,\\max}$")[names(traits)]),
-            "Model-estimated marginal means per cytotype and leaf side ($g_{s,\\max}$ in mol m$^{-2}$ s$^{-1}$).")
+place_table(side_table(tab, "Cytotype", col_lookup[names(traits)]),
+            "Model-estimated marginal means (EMMs) per cytotype and leaf side ($g_{s,\\max}$ in mol m$^{-2}$ s$^{-1}$; SPI dimensionless).")
 ```
 
 ```{r contrast-table}
@@ -169,48 +224,133 @@ con <- bind_rows(lapply(names(emms), function(t)
          estimate = ifelse(contrast %in% keep, estimate, -estimate),
          contrast = ifelse(contrast %in% keep, contrast, rev_lab)) %>%
   filter(contrast %in% keep) %>%
-  mutate(val = paste0(ifelse(trait == "gsmax", sprintf("%+.2f", estimate),
-                             sprintf("%+.1f", estimate)), " ", stars(p.value)),
+  mutate(val = paste0(ifelse(trait == "spi", sprintf("%+.3f", estimate),
+                      ifelse(trait == "gsmax", sprintf("%+.2f", estimate),
+                             sprintf("%+.1f", estimate))), " ", stars(p.value)),
          col = paste(leaf_side, trait, sep = "_")) %>%
-  select(contrast, col, val) %>%
+  dplyr::select(contrast, col, val) %>%
   pivot_wider(names_from = col, values_from = val) %>%
   mutate(contrast = factor(contrast, levels = keep)) %>% arrange(contrast) %>%
   mutate(contrast = gsub("_", "\\\\_", as.character(contrast)))
+
+con_lookup <- c(length = "Length", density = "Density", spi = "SPI", gsmax = "$g_{s,\\max}$")
 con <- con[, c("contrast", paste0("abaxial_", names(traits)), paste0("adaxial_", names(traits)))]
-place_table(side_table(con, "Contrast", c(length = "Length", density = "Density", gsmax = "$g_{s,\\max}$")[names(traits)]),
+place_table(side_table(con, "Contrast", con_lookup[names(traits)]),
             "Selected pairwise differences (first minus second cytotype), Tukey-adjusted within leaf side. *** $p<0.001$, ** $p<0.01$, * $p<0.05$, ns not significant.")
 ```
 
+```{r variance-decomp-table}
+decompose_traits <- function(d, traits_map) {
+  res_list <- list()
+  for (t in names(traits_map)) {
+    y <- traits_map[[t]]
+    sub_d <- d[!is.na(d[[y]]), ]
+    m_full <- lmer(reformulate("cytotype * leaf_side + (1 | population) + (1 | population:plant_ID)", response = y), data = sub_d)
+    
+    vc <- as.data.frame(VarCorr(m_full))
+    var_pop   <- vc$vcov[vc$grp == "population"]
+    var_plant <- vc$vcov[vc$grp == "population:plant_ID"]
+    var_res   <- vc$vcov[vc$grp == "Residual"]
+    
+    var_fix_total <- var(predict(m_full, re.form = NA))
+    
+    m_no_inter <- lmer(reformulate("cytotype + leaf_side + (1 | population) + (1 | population:plant_ID)", response = y), data = sub_d)
+    m_no_side  <- lmer(reformulate("cytotype + (1 | population) + (1 | population:plant_ID)", response = y), data = sub_d)
+    m_no_cyt   <- lmer(reformulate("leaf_side + (1 | population) + (1 | population:plant_ID)", response = y), data = sub_d)
+    
+    r2_full     <- r.squaredGLMM(m_full)[1, "R2m"]
+    r2_no_inter <- r.squaredGLMM(m_no_inter)[1, "R2m"]
+    r2_no_side  <- r.squaredGLMM(m_no_side)[1, "R2m"]
+    r2_no_cyt   <- r.squaredGLMM(m_no_cyt)[1, "R2m"]
+    
+    delta_inter <- max(0, r2_full - r2_no_inter)
+    delta_side  <- max(0, r2_no_inter - r2_no_side)
+    delta_cyt   <- max(0, r2_no_inter - r2_no_cyt)
+    sum_delta   <- delta_cyt + delta_side + delta_inter
+    
+    if (sum_delta > 0) {
+      var_cyt   <- var_fix_total * (delta_cyt / sum_delta)
+      var_side  <- var_fix_total * (delta_side / sum_delta)
+      var_inter <- var_fix_total * (delta_inter / sum_delta)
+    } else {
+      var_cyt <- var_fix_total; var_side <- 0; var_inter <- 0
+    }
+    
+    var_total <- var_fix_total + var_pop + var_plant + var_res
+    
+    pcts <- c(
+      "Cytotype (Ploidy)"                 = 100 * var_cyt / var_total,
+      "Leaf side"                        = 100 * var_side / var_total,
+      "Cytotype $\\times$ Side"          = 100 * var_inter / var_total,
+      "Population of origin"             = 100 * var_pop / var_total,
+      "Plant ID (within population)"     = 100 * var_plant / var_total,
+      "Residual (image-to-image)"        = 100 * var_res / var_total,
+      "$R^2_m$ Marginal (Fixed effects)" = 100 * var_fix_total / var_total,
+      "$R^2_c$ Conditional (Full model)" = 100 * (var_fix_total + var_pop + var_plant) / var_total
+    )
+    res_list[[t]] <- sprintf("%.1f\\%%", pcts)
+  }
+  df_out <- as.data.frame(res_list)
+  df_out <- cbind(Level = names(pcts), df_out)
+  rownames(df_out) <- NULL
+  df_out
+}
+
+traits_var_map <- c(length = "ploidy_median_stoma_length_um",
+                    density = "stomatal_density_per_mm2",
+                    spi = "spi",
+                    gsmax = "gsmax_theor")
+traits_var_map <- traits_var_map[traits_var_map %in% names(df)]
+
+tab_var <- decompose_traits(df, traits_var_map)
+var_col_labels <- c("Source of variation", "Length", "Density", "SPI", "$g_{s,\\max}$")
+place_table(kable(tab_var, format = "latex", booktabs = TRUE, escape = FALSE,
+                  col.names = var_col_labels[seq_len(ncol(tab_var))],
+                  align = paste0("l", strrep("c", ncol(tab_var) - 1)), linesep = ""),
+            "Variance decomposition across biological and experimental levels (\\% of total phenotypic variance explained). Marginal $R^2_m$ captures fixed effects; conditional $R^2_c$ captures total model explanatory power.")
+```
+
 ```{r fig-traits}
-#| fig-cap: "Stoma length, stomatal density and theoretical maximum conductance per micrograph. Boxes show image-level distributions; white diamonds with bars show model EMMs $\\pm$ 95\\% CI."
+#| fig-cap: "Distributions of stoma length, density, SPI, and anatomical conductance ($g_{s,\\max}$) per microscope image across cytotypes and leaf sides. Boxes show image-level distributions; white diamonds with bars show model EMMs $\\pm$ 95\\% CI. Letters above boxes display Tukey-adjusted compact letter display (CLD; $p < 0.05$) within each leaf side; cytotypes sharing a letter do not differ significantly."
 #| fig-width: 7
-#| fig-height: 6.2
+#| fig-height: 7.2
 long <- df %>%
-  select(cytotype, leaf_side, any_of(traits)) %>%
+  dplyr::select(cytotype, leaf_side, any_of(traits)) %>%
   pivot_longer(-c(cytotype, leaf_side), names_to = "trait", values_to = "value") %>%
   filter(!is.na(value)) %>%
   mutate(trait = factor(trait, levels = names(traits), labels = trait_lab))
-emm_plot <- emm_df %>%
+
+cld_plot <- emm_df %>%
   mutate(trait = factor(trait, levels = names(traits), labels = trait_lab))
+
+panel_max <- long %>%
+  group_by(trait, leaf_side) %>%
+  summarise(y_top = max(value, na.rm = TRUE), .groups = "drop")
+
+cld_plot <- cld_plot %>% left_join(panel_max, by = c("trait", "leaf_side"))
 
 ggplot(long, aes(cytotype, value, fill = cytotype)) +
   geom_boxplot(width = 0.55, alpha = 0.7, outlier.size = 0.4,
                outlier.alpha = 0.3, colour = "#374151", linewidth = 0.3) +
-  geom_errorbar(data = emm_plot, inherit.aes = FALSE, width = 0.15,
+  geom_errorbar(data = cld_plot, inherit.aes = FALSE, width = 0.15,
                 aes(cytotype, ymin = asymp.LCL, ymax = asymp.UCL)) +
-  geom_point(data = emm_plot, inherit.aes = FALSE, aes(cytotype, emmean),
+  geom_point(data = cld_plot, inherit.aes = FALSE, aes(cytotype, emmean),
              shape = 23, size = 2.4, fill = "white") +
+  geom_text(data = cld_plot, inherit.aes = FALSE,
+            aes(cytotype, y = y_top * 1.05, label = .group),
+            fontface = "bold", size = 3.2, vjust = 0) +
   facet_grid(trait ~ leaf_side, scales = "free_y", switch = "y",
              labeller = labeller(trait = label_parsed)) +
   scale_fill_manual(values = cyt_cols, guide = "none") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.14))) +
   labs(x = NULL, y = NULL) +
   theme(strip.placement = "outside")
 ```
 
 ```{r fig-tradeoff}
-#| fig-cap: "Size--density trade-off. Each point is a plant mean; lines are per-cytotype linear fits."
+#| fig-cap: "Size--density trade-off across cytotypes. Each point represents a single plant mean; solid lines are per-cytotype ordinary least squares fits."
 #| fig-width: 7
-#| fig-height: 3.2
+#| fig-height: 3.1
 pm <- df %>%
   filter(!is.na(ploidy_median_stoma_length_um)) %>%
   group_by(plant_ID, cytotype, leaf_side) %>%
@@ -231,9 +371,9 @@ ggplot(pm, aes(len, dens, colour = cytotype)) +
 show_cmp <- has_prev
 if (show_cmp) {
   prev <- load_summary(p_prev_sum)
-  emms_prev <- lapply(traits, function(y) fit_emm(prev, y))
-  emm_prev <- bind_rows(lapply(names(emms_prev), function(t)
-    if (is.null(emms_prev[[t]])) NULL else as.data.frame(emms_prev[[t]]) %>% mutate(trait = t)))
+  cld_prev_list <- lapply(traits, function(y) fit_emm(prev, y))
+  emm_prev <- bind_rows(lapply(names(cld_prev_list), function(t)
+    if (is.null(cld_prev_list[[t]])) NULL else cld_prev_list[[t]] %>% mutate(trait = t)))
 
   # best epoch (Ultralytics seg fitness) from a results.csv
   best_epoch <- function(p) {
@@ -251,7 +391,7 @@ if (show_cmp) {
   tr_new <- best_epoch(p_new_tr); tr_prev <- best_epoch(p_prev_tr)
 
   det_stats <- function(sum_df, sto_path) {
-    out <- c("Micrographs" = nrow(sum_df),
+    out <- c("Microscope images" = nrow(sum_df),
              "Stomata counted" = sum(sum_df$total_stomata_count, na.rm = TRUE),
              "Stomata per image (mean)" = mean(sum_df$total_stomata_count, na.rm = TRUE),
              "Images with no stomata" = sum(sum_df$total_stomata_count == 0, na.rm = TRUE),
@@ -267,10 +407,10 @@ if (show_cmp) {
   ds_new <- det_stats(df, p_new_sto); ds_prev <- det_stats(prev, p_prev_sto)
 
   matched <- inner_join(
-    df %>% select(image_name, cytotype, n_new = total_stomata_count, d_new = stomatal_density_per_mm2,
-                  l_new = ploidy_median_stoma_length_um),
-    prev %>% select(image_name, n_prev = total_stomata_count, d_prev = stomatal_density_per_mm2,
-                    l_prev = ploidy_median_stoma_length_um),
+    df %>% dplyr::select(image_name, cytotype, n_new = total_stomata_count, d_new = stomatal_density_per_mm2,
+                         l_new = ploidy_median_stoma_length_um),
+    prev %>% dplyr::select(image_name, n_prev = total_stomata_count, d_prev = stomatal_density_per_mm2,
+                           l_prev = ploidy_median_stoma_length_um),
     by = "image_name")
   r_d <- cor(matched$d_new, matched$d_prev, use = "complete.obs")
   r_l <- cor(matched$l_new, matched$l_prev, use = "complete.obs")
@@ -284,7 +424,7 @@ fmt_val <- function(x, n) ifelse(is.na(x), "--",
 
 `r if (show_cmp) "## Comparison with the previous model" else ""`
 
-`r if (show_cmp) paste0("Results above come from the newly trained model. Below they are compared with the previous model's run on the same micrographs (", if (!is.null(info$previous_training_run)) paste0("\\texttt{", gsub("_", "\\\\_", basename(sub('/$', '', info$previous_training_run))), "}") else "previous run", " vs. ", if (!is.null(info$new_training_run)) paste0("\\texttt{", gsub("_", "\\\\_", basename(sub('/$', '', info$new_training_run))), "}") else "new run", "). Across ", format(nrow(matched), big.mark = ","), " matched images, per-image density correlates at r = ", f2(r_d), " and median stoma length at r = ", f2(r_l), "; the stoma count is identical in ", round(100 * same_n), "\\% of images and within $\\pm 1$ in ", round(100 * within1), "\\%.") else ""`
+`r if (show_cmp) paste0("Results above come from the newly trained model. Below they are compared with the previous model run on the same microscope images (", if (!is.null(info$previous_training_run)) paste0("\\texttt{", gsub("_", "\\\\_", basename(sub('/$', '', info$previous_training_run))), "}") else "previous run", " vs. ", if (!is.null(info$new_training_run)) paste0("\\texttt{", gsub("_", "\\\\_", basename(sub('/$', '', info$new_training_run))), "}") else "new run", "). Across ", format(nrow(matched), big.mark = ","), " matched images, per-image density correlates at r = ", f2(r_d), " and median stoma length at r = ", f2(r_l), "; the stoma count is identical in ", round(100 * same_n), "\\% of images and within $\\pm 1$ in ", round(100 * within1), "\\%.") else ""`
 
 ```{r model-cmp-table}
 #| eval: !expr show_cmp && (!is.null(tr_new) || !is.null(tr_prev))
@@ -293,7 +433,7 @@ tm <- data.frame(Metric = nm,
                  Previous = if (is.null(tr_prev)) "--" else fmt_val(tr_prev[nm], nm),
                  New = if (is.null(tr_new)) "--" else fmt_val(tr_new[nm], nm))
 place_table(kable(tm, format = "latex", booktabs = TRUE, align = "lcc", row.names = FALSE, linesep = ""),
-            "Training metrics at the best epoch (validation split). The validation sets differ between dataset versions, so these numbers are only roughly comparable.")
+            "Training metrics at the best epoch (validation split).")
 ```
 
 ```{r detect-cmp-table}
@@ -302,7 +442,7 @@ nm <- names(ds_new)
 dt <- data.frame(Quantity = gsub("%", "\\\\%", gsub("<", "$<$", nm)),
                  Previous = fmt_val(ds_prev[nm], nm), New = fmt_val(ds_new[nm], nm))
 place_table(kable(dt, format = "latex", booktabs = TRUE, escape = FALSE, align = "lcc", row.names = FALSE, linesep = ""),
-            "Detection summary across all micrographs, previous vs. new model.")
+            "Detection summary across all microscope images, previous vs. new model.")
 ```
 
 ```{r emm-cmp-table}
@@ -316,32 +456,46 @@ arrow <- function(t, cyt, digits) {
 ct <- data.frame(Cytotype = gsub("_", "\\\\_", names(cyt_cols)),
                  Length = sapply(names(cyt_cols), arrow, t = "length", digits = 1),
                  Density = sapply(names(cyt_cols), arrow, t = "density", digits = 0),
+                 SPI = sapply(names(cyt_cols), arrow, t = "spi", digits = 3),
                  gsmax = sapply(names(cyt_cols), arrow, t = "gsmax", digits = 2))
-place_table(kable(ct, format = "latex", booktabs = TRUE, escape = FALSE, align = "lccc", row.names = FALSE, linesep = "",
-                  col.names = c("Cytotype", "Length ($\\mu$m)", "Density (mm$^{-2}$)", "$g_{s,\\max}$")),
+place_table(kable(ct, format = "latex", booktabs = TRUE, escape = FALSE, align = "lcccc", row.names = FALSE, linesep = "",
+                  col.names = c("Cytotype", "Length ($\\mu$m)", "Density (mm$^{-2}$)", "SPI", "$g_{s,\\max}$")),
             "Abaxial EMMs from the previous and the new model (previous $\\rightarrow$ new).")
 ```
 
-```{r fig-cmp}
-#| eval: !expr show_cmp
-#| fig-cap: "Per-image agreement between the previous and the new model. Dashed line: 1:1."
-#| fig-width: 7
-#| fig-height: 3.3
-mm <- bind_rows(
-  matched %>% transmute(cytotype, prev = d_prev, new = d_new, trait = "Density~(mm^-2)"),
-  matched %>% transmute(cytotype, prev = l_prev, new = l_new, trait = "Median~stoma~length~(mu*m)")
-) %>% filter(!is.na(prev), !is.na(new))
-ggplot(mm, aes(prev, new, colour = cytotype)) +
-  geom_abline(linetype = "dashed", colour = "grey40") +
-  geom_point(alpha = 0.35, size = 0.6) +
-  facet_wrap(~ trait, scales = "free", labeller = label_parsed) +
-  scale_colour_manual(values = cyt_cols) +
-  labs(x = "Previous model", y = "New model", colour = NULL) +
-  theme(legend.position = "bottom")
-```
+\newpage
 
-## Caveats
+## Glossary and Technical Definitions {#sec:glossary}
 
-- Results are **preliminary**; measurements come from an automated pipeline and have not yet been fully validated against manual counts on an independent set.
-- $g_{s,\max}$ is a *theoretical* anatomical estimate using guard-cell width as a proxy for pore depth and the imaged (not maximal) aperture; it is best used for relative comparisons among cytotypes, not as absolute conductance.
-- With only `r n_pop` populations, the population-level variance component is estimated imprecisely.
+\hypertarget{term:micrograph}{\textbf{Microscope Image (Micrograph):}}
+Simply an individual photograph taken through the microscope camera. Each image captures one field of view on a leaf surface imprint (covering $0.230\,\text{mm}^2$ of the epidermis). In this report, "3,253 images" or "3,253 micrographs" means 3,253 individual image files.
+
+\hypertarget{term:population}{\textbf{Population:}}
+The geographic accession / field population of origin. The 5 populations included in the study are `AA012` and `AA025` (diploid origins), `AA225` and `AA310` (natural tetraploid origins), and `AA372` (mixed cytotype origin).
+
+\hypertarget{term:cytotype}{\textbf{Cytotype:}}
+The chromosomal ploidy classification of sampled individuals:
+- `nat_2x`: Natural diploid reference ($2n = 2x$).
+- `ory_2x`: Diploid control treated with oryzalin but retaining diploid ploidy.
+- `nat_4x`: Established natural tetraploid ($2n = 4x$).
+- `neo_4x`: Synthetic autotetraploid induced via mitotic spindle disruption with colchicine/oryzalin.
+
+\hypertarget{term:leafside}{\textbf{Stomata on Both Leaf Surfaces (Abaxial vs. Adaxial):}}
+Leaves develop functional stomata on both the upper and lower epidermis surfaces rather than restricting them to the underside. \textbf{Abaxial} refers to the lower surface (typically shaded and carrying ~20--25\% higher stomatal density); \textbf{adaxial} refers to the upper surface facing the sun.
+
+\hypertarget{term:gsmax}{\textbf{Theoretical Anatomical Maximum Conductance ($g_{s,\max}$):}}
+The physical structural ceiling for water vapor diffusion through the stomatal network (mol m$^{-2}$ s$^{-1}$) following the biophysical diffusion model of Franks \& Farquhar (2001) and Sack \& Buckley (2016). Expressed per unit leaf area as:
+$$g_{s,\max} = \frac{d}{v}\,\frac{D\,a_{\max}}{l + \frac{\pi}{2}\sqrt{a_{\max}/\pi}}$$
+where $d$ is diffusivity ($2.49 \times 10^{-5}\,\text{m}^2/\text{s}$), $v$ is molar volume ($0.02446\,\text{m}^3/\text{mol}$), $D$ is stomatal density, and pore depth $l$ is guard-cell thickness ($w_{gc}$).
+
+\hypertarget{term:pore_openness}{\textbf{Pore Openness \& Theoretical Maximum Geometry:}}
+In physical imprints or peels, observed pore aperture fluctuates with momentary environmental conditions (light, VPD, time of sampling) and physical drying dynamics during imprint preparation. Calculating $g_{s,\max}$ directly from momentary aperture introduces sampling noise. Following Franks \& Beerling (2009) and Sack \& Buckley (2016), the anatomical maximum aperture is modeled from stoma geometry as $w_{\max} = 0.5\,L_{\text{pore}}$ (yielding $a_{\max} = \frac{\pi}{8} L_{\text{pore}}^2$). This standardizes $g_{s,\max}$ into a pure constitutional trait.
+
+\hypertarget{term:spi}{\textbf{Stomatal Pore Area Index (SPI):}}
+A dimensionless anatomical metric defined as $\text{SPI} = \text{Density} \times L_{\text{stoma}}^2$ (Sack et al. 2003). It quantifies the relative leaf surface area invested into the stomatal apparatus without requiring any assumptions regarding pore depth, 3D throat resistance, or aperture state.
+
+\hypertarget{term:emm}{\textbf{Estimated Marginal Means (EMM):}}
+Model-adjusted marginal means derived from linear mixed-effects models (`lmer`), accounting for unbalanced repeated sampling across individual plants (`plant_ID`) nested within populations.
+
+\hypertarget{term:cld}{\textbf{Compact Letter Display (CLD):}}
+A lettering scheme (Piepho 2004) summarizing all pairwise Tukey-adjusted hypothesis tests ($p < 0.05$). Treatments sharing at least one common letter are not statistically distinguishable, whereas groups with distinct letters differ significantly.

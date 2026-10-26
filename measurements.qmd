@@ -19,6 +19,12 @@ The figure below shows a single stoma from a real brightfield microscopy image (
 
 ![Real brightfield microscopy image of a stoma with PSCA's four measurement dimensions annotated. Yellow = major axis; orange = minor axis (full stoma width); blue = pore width; magenta = guard cell thickness (one side).](stomata_diagram.png){fig-align="center" width="80%"}
 
+::: {.callout-tip}
+## 🔍 Interactive Measurement Inspector & Digital Caliper
+You can interactively inspect these four measurement vectors overlaid on live microscope crops, zoom in up to 8×, and verify accuracy using the built-in virtual digital caliper in the CESNET web app:
+👉 **[Open Live Stomata QC App (https://stomata-review-stenc.dyn.cloud.e-infra.cz)](https://stomata-review-stenc.dyn.cloud.e-infra.cz)** · [Full QC App Documentation](review_app.qmd)
+:::
+
 ------------------------------------------------------------------------
 
 ## Trait Definitions

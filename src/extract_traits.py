@@ -203,20 +203,41 @@ def measure_subpixel_pore_aperture(img_bgr, stoma_poly, matched_pore_poly=None):
         return None
 
 
-def compute_gsmax(density_per_mm2, pore_major_um, pore_minor_um, guard_cell_width_um):
+def compute_gsmax(density_per_mm2, pore_major_um, pore_minor_um, guard_cell_width_um, use_theoretical_aperture=True):
     """
     Computes maximum theoretical stomatal conductance to water vapor (mol m-2 s-1)
     based on Franks & Farquhar (2001) and Sack & Buckley (2016).
+
+    Parameters:
+    -----------
+    density_per_mm2 : float
+        Stomatal density in stomata per mm2.
+    pore_major_um : float
+        Pore major axis length in um.
+    pore_minor_um : float
+        Measured pore aperture (minor axis) in um.
+    guard_cell_width_um : float
+        Guard cell width in um (proxy for pore depth l).
+    use_theoretical_aperture : bool
+        If True (standard in comparative anatomy; Franks & Beerling 2009, Sack & Buckley 2016),
+        assumes maximum physiological aperture scales geometrically as w_max = 0.5 * pore_major_um
+        (a_max = pi/8 * pore_major_um^2). This eliminates momentary sampling/drying bias across plants.
+        If False, uses the observed pore_minor_um.
     """
-    if density_per_mm2 <= 0 or pore_major_um <= 0 or pore_minor_um <= 0:
+    if density_per_mm2 <= 0 or pore_major_um <= 0:
         return 0.0
 
     d = 2.49e-5   # Diffusivity of water vapor in air at 25°C (m2/s)
     v = 0.02446   # Molar volume of air at 25°C (m3/mol)
     D = density_per_mm2 * 1e6  # Stomatal density in stomata/m2
 
-    # Maximum pore area a_max in m2 (ellipse)
-    a_max = (np.pi / 4.0) * (pore_major_um * 1e-6) * (pore_minor_um * 1e-6)
+    if use_theoretical_aperture:
+        # Theoretical maximum pore area a_max in m2 (ellipse with w_max = 0.5 * L_pore)
+        a_max = (np.pi / 8.0) * ((pore_major_um * 1e-6) ** 2)
+    else:
+        if pore_minor_um is None or pore_minor_um <= 0:
+            return 0.0
+        a_max = (np.pi / 4.0) * (pore_major_um * 1e-6) * (pore_minor_um * 1e-6)
 
     # Pore depth l in m (approximated as guard cell width)
     l_depth = max(1e-6, guard_cell_width_um * 1e-6)
@@ -644,7 +665,8 @@ def extract_traits(model_path, input_dir, output_csv, tile_size=640, stride=448,
             median_width = round(ploidy_subset["stoma_minor_um"].median(), 2) if n_ploidy > 0 else np.nan
             # Biophysical & Spatial metrics
             median_pore_len = round(ploidy_subset["pore_major_um"].median(), 2) if n_ploidy > 0 else np.nan
-            gsmax = compute_gsmax(density_per_mm2, median_pore_len, median_aperture, median_gc_width) if n_ploidy > 0 else np.nan
+            gsmax_theor = compute_gsmax(density_per_mm2, median_pore_len, median_aperture, median_gc_width, use_theoretical_aperture=True) if n_ploidy > 0 else np.nan
+            gsmax_oper = compute_gsmax(density_per_mm2, median_pore_len, median_aperture, median_gc_width, use_theoretical_aperture=False) if n_ploidy > 0 else np.nan
             spi = compute_spi(density_per_mm2, median_len) if (not np.isnan(median_len)) else np.nan
 
             centroids = list(zip(group["centroid_x"], group["centroid_y"]))
@@ -663,7 +685,8 @@ def extract_traits(model_path, input_dir, output_csv, tile_size=640, stride=448,
                 "ploidy_median_stoma_width_um": median_width,
                 "ploidy_median_guard_cell_width_um": median_gc_width,
                 "ploidy_median_aperture_um": median_aperture,
-                "gsmax_mol_m2_s": gsmax,
+                "gsmax_mol_m2_s": gsmax_theor,
+                "gsmax_operational_mol_m2_s": gsmax_oper,
                 "stomatal_pore_area_index_spi": spi,
                 "mean_nnd_um": mean_nnd,
                 "clark_evans_r": ce_r,

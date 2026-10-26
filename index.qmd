@@ -4,6 +4,14 @@ format: html
 editor: visual
 ---
 
+::: {.callout-note appearance="simple"}
+## 🚀 Live App: Stomata Measurement Precision & QC Review
+Inspect automated stomata detections, verify biometric measurement axes ($L_{\text{maj}}$, $L_{\text{min}}$, $P_w$, $G_w$), benchmark error with digital calipers, and review full micrographs on CESNET:
+👉 **[Open Stomata QC App (https://stomata-review-stenc.dyn.cloud.e-infra.cz)](https://stomata-review-stenc.dyn.cloud.e-infra.cz)** · [Read the Full Documentation](review_app.qmd)
+:::
+
+------------------------------------------------------------------------
+
 ## ☁️ CESNET S3 Cloud Storage Connection Protocol
 
 **Goal:** Connect our team's cloud storage (CESNET S3) to your local computer so it appears as a regular folder. This allows you to drag-and-drop files from tools like Fiji, Excel, or RStudio directly to the cloud without using the browser.

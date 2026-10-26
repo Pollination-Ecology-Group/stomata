@@ -1,0 +1,10 @@
+# Unified Roboflow / YOLOv8 / YOLO11 Segmentation Dataset (300 Crops)
+train: ./images
+val: ./images
+
+nc: 2
+names: ['center', 'stomata-huw1']
+
+roboflow:
+  project: stomata-retraining
+  description: "300 curated crops (200 Batch 1 + 100 Batch 2 hard cases)"
