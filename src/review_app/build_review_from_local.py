@@ -369,10 +369,15 @@ def main():
         companion_stomata = []
         for comp_idx, c_stoma in enumerate(stomas[1:], 2):
             comp_pore = None
-            for c in centers:
-                if c_stoma.contains(c.centroid) or (c_stoma.intersection(c).area / max(1e-4, c.area) > 0.5):
-                    comp_pore = c
-                    break
+            is_c_edge = any(x <= 3 or y <= 3 or x >= W - 3 or y >= H - 3 for x, y in c_stoma.exterior.coords)
+            if not is_c_edge:
+                for c in centers:
+                    # Ignore synthetic 5-point boxes on borders
+                    if len(c.exterior.coords) == 5:
+                        continue
+                    if c_stoma.contains(c.centroid) or (c_stoma.intersection(c).area / max(1e-4, c.area) > 0.5):
+                        comp_pore = c
+                        break
             c_traits, c_vectors = compute_anatomical_vectors_and_traits(c_stoma, comp_pore, W, H)
             companion_stomata.append({
                 "stoma_idx": comp_idx,

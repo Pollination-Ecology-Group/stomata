@@ -918,7 +918,8 @@ th.num { text-align: right; }
   <h1>🌿 Stomata Precision <span>QC</span> <span class="badge">CESNET</span></h1>
   
   <div class="tabs">
-    <button id="tab-crop" class="active" onclick="switchView('crop')">🔬 Stoma Precision</button>
+    <button id="tab-crop" class="active" onclick="switchView('crop')">🔬 Stoma Review</button>
+    <button id="tab-label" onclick="switchView('label')">🏷️ Labeling Studio (<span id="tab-poor-count">0</span>)</button>
     <button id="tab-overview" onclick="switchView('overview')">🗺️ Micrograph Field</button>
     <button id="tab-analytics" onclick="switchView('analytics')">📊 Precision Dashboard</button>
     <button id="tab-help" onclick="switchView('help')">❓ Guide &amp; Calipers</button>
@@ -954,6 +955,14 @@ th.num { text-align: right; }
     <!-- Left: Queue -->
     <aside class="queue-panel">
       <div class="queue-header">
+        <div class="filter-row" style="margin-bottom:6px;">
+          <select id="filter-status" onchange="applyFilters()" style="width:100%;font-weight:600;background:var(--panel2);border:1px solid rgba(249,115,22,0.4);color:var(--text);border-radius:6px;padding:4px 8px;">
+            <option value="all">All Crops</option>
+            <option value="poor_outline" style="color:#f97316;font-weight:700;">⚠️ Poor Outlines / Relabel (<span id="count-poor-select">0</span>)</option>
+            <option value="unreviewed">⏳ Unreviewed</option>
+            <option value="reviewed">✅ Reviewed</option>
+          </select>
+        </div>
         <div class="filter-row">
           <select id="filter-cytotype" onchange="applyFilters()">
             <option value="all">All Cytotypes</option>
@@ -974,6 +983,16 @@ th.num { text-align: right; }
 
     <!-- Center: Stage -->
     <section class="stage-panel">
+      <!-- Labeling Mode Banner -->
+      <div id="labeling-banner" hidden style="background:linear-gradient(90deg, rgba(249,115,22,0.22), rgba(239,68,68,0.18));border-bottom:1px solid rgba(249,115,22,0.45);padding:8px 16px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:#fed7aa;">
+        <span style="font-size:16px;">🏷️</span>
+        <div>
+          <strong style="color:#fb923c;">Labeling Studio:</strong>
+          <span>Showing poorly outlined stomata queued for retraining. Drag points or redraw polygons to fix stoma and pore boundaries.</span>
+        </div>
+        <div class="spacer"></div>
+        <button onclick="switchView('crop')" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:6px;padding:4px 10px;font-size:11.5px;cursor:pointer;">← Return to All Crops</button>
+      </div>
       <div class="stage-bar">
         <button onclick="nav(-1)" title="Previous stoma (Left Arrow)">← Prev</button>
         <button onclick="nav(1)" title="Next stoma (Right Arrow)">Next →</button>
@@ -1534,18 +1553,43 @@ async function init() {
   }
 }
 
+function updatePoorCountBadge() {
+  const rev = getReviewer();
+  let count = 0;
+  (S.items || []).forEach(it => {
+    const d = (S.decisions[it.id] || {})[rev];
+    const isRelabel = S.relabelSet && S.relabelSet.has(it.id);
+    const isPoor = (d && d.verdict === 'poor_measurement') || isRelabel;
+    if (isPoor) count++;
+  });
+  if ($('#tab-poor-count')) $('#tab-poor-count').textContent = count;
+  if ($('#count-poor-select')) $('#count-poor-select').textContent = count;
+}
+
 function applyFilters() {
-  const cyto = $('#filter-cytotype').value;
-  const suit = $('#filter-suitability').value;
+  const cyto = $('#filter-cytotype') ? $('#filter-cytotype').value : 'all';
+  const suit = $('#filter-suitability') ? $('#filter-suitability').value : 'all';
+  const status = $('#filter-status') ? $('#filter-status').value : 'all';
+  const rev = getReviewer();
   
   S.filtered = S.items.filter(it => {
     if (cyto !== 'all' && it.cytotype !== cyto) return false;
     if (suit === 'suitable' && !it.is_suitable_for_ploidy_sizing) return false;
     if (suit === 'unsuitable' && it.is_suitable_for_ploidy_sizing) return false;
+    
+    const d = (S.decisions[it.id] || {})[rev];
+    const isRelabel = S.relabelSet && S.relabelSet.has(it.id);
+    const isPoor = (d && d.verdict === 'poor_measurement') || isRelabel;
+
+    if (status === 'poor_outline' && !isPoor) return false;
+    if (status === 'unreviewed' && d) return false;
+    if (status === 'reviewed' && !d) return false;
+    
     return true;
   });
   
   updateQueue();
+  updatePoorCountBadge();
   if (S.filtered.length > 0) {
     loadItem(0);
   }
@@ -1666,10 +1710,11 @@ function loadItem(idx) {
   return true;
 }
 
-async function toggleRelabelCurrent() {
+async function toggleRelabelCurrent(forceState = null) {
   if (!S.cur) return;
   const isFlagged = S.relabelSet.has(S.cur.id);
-  const nextState = !isFlagged;
+  const nextState = forceState !== null ? forceState : !isFlagged;
+  if (forceState !== null && nextState === isFlagged) return;
   
   try {
     const res = await fetch('/api/relabel', {
@@ -1678,24 +1723,25 @@ async function toggleRelabelCurrent() {
       body: JSON.stringify({
         id: S.cur.id,
         relabel: nextState,
-        comment: $('#decision-comment').value.trim()
+        comment: $('#decision-comment') ? $('#decision-comment').value.trim() : ''
       })
     });
     const d = await res.json();
     if (d.ok) {
       if (nextState) {
         S.relabelSet.add(S.cur.id);
-        toast('🏷️ Stoma crop queued for Roboflow relabeling.');
+        toast('🏷️ Stoma crop queued for labeling.');
       } else {
         S.relabelSet.delete(S.cur.id);
-        toast('Removed from Roboflow relabeling queue.');
+        toast('Removed from labeling queue.');
       }
       updateRelabelButtonState();
       updateRelabelCount();
+      updatePoorCountBadge();
       updateQueue();
     }
   } catch (err) {
-    toast('Error updating relabel queue.');
+    toast('Error updating labeling queue.');
   }
 }
 
@@ -1789,7 +1835,14 @@ function setVerdict(v, markDirtyFlag = true) {
     const btn = $(`.btn-verdict.${map[v]}`);
     if (btn) btn.classList.add('active');
   }
+  
+  // Auto-flag Poor Outline for labeling & retraining
+  if (v === 'poor_measurement' && S.cur) {
+    toggleRelabelCurrent(true);
+  }
+  
   if (markDirtyFlag) S.dirty = true;
+  updatePoorCountBadge();
 }
 
 function markDirty() { S.dirty = true; }
@@ -2132,18 +2185,19 @@ function draw() {
           ctx.fill();
         }
         
-        // Pore: border stomata often have degenerate synthetic border slivers
-        if ($('#chk-pore-outline').checked && cs.pore_poly && cs.pore_poly.length > 2) {
-          const isPoreBorderSliver = cs.pore_poly.some(([x, y]) => x <= 3 || y <= 3 || x >= 637 || y >= 637);
+        // Pore: suppress non-functional/synthetic fallback rectangles and border slivers
+        const isPoreBorderSliver = cs.pore_poly && cs.pore_poly.some(([x, y]) => x <= 3 || y <= 3 || x >= 637 || y >= 637);
+        const isSyntheticRect = cs.pore_poly && cs.pore_poly.length === 5 && (new Set(cs.pore_poly.map(p => Math.round(p[0]))).size <= 3 || new Set(cs.pore_poly.map(p => Math.round(p[1]))).size <= 3);
+        const shouldHideCsPore = isCsEdge || isPoreBorderSliver || isSyntheticRect;
+
+        if ($('#chk-pore-outline').checked && cs.pore_poly && cs.pore_poly.length > 2 && !shouldHideCsPore) {
           ctx.beginPath();
           cs.pore_poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
           ctx.closePath();
-          ctx.strokeStyle = isPoreBorderSliver ? 'rgba(239, 68, 68, 0.45)' : 'rgba(6, 182, 212, 0.75)';
+          ctx.strokeStyle = 'rgba(6, 182, 212, 0.75)';
           ctx.lineWidth = 1.6 / S.zoom;
-          if (isPoreBorderSliver) ctx.setLineDash([2 / S.zoom, 2 / S.zoom]);
           ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.fillStyle = isPoreBorderSliver ? 'rgba(239, 68, 68, 0.12)' : 'rgba(6, 182, 212, 0.18)';
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.18)';
           ctx.fill();
         }
         
@@ -2169,7 +2223,12 @@ function draw() {
     }
     
     // 2. Pore Outline (Cyan)
-    if ($('#chk-pore-outline').checked && v.pore_poly && v.pore_poly.length > 2) {
+    const isPrimaryEdge = v.stoma_poly && v.stoma_poly.some(([x, y]) => x <= 3 || y <= 3 || x >= 637 || y >= 637);
+    const isPrimaryPoreBorderSliver = v.pore_poly && v.pore_poly.some(([x, y]) => x <= 3 || y <= 3 || x >= 637 || y >= 637);
+    const isPrimarySyntheticRect = v.pore_poly && v.pore_poly.length === 5 && (new Set(v.pore_poly.map(p => Math.round(p[0]))).size <= 3 || new Set(v.pore_poly.map(p => Math.round(p[1]))).size <= 3);
+    const shouldHidePrimaryPore = (isPrimaryEdge && (isPrimaryPoreBorderSliver || isPrimarySyntheticRect));
+
+    if ($('#chk-pore-outline').checked && v.pore_poly && v.pore_poly.length > 2 && !shouldHidePrimaryPore) {
       ctx.beginPath();
       v.pore_poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
       ctx.closePath();
@@ -2746,9 +2805,43 @@ window.addEventListener('keyup', e => {
 // View Switcher
 function switchView(mode) {
   $$('.tabs button').forEach(b => b.classList.remove('active'));
-  $('#tab-' + mode).classList.add('active');
   
-  $('#view-crop').hidden = (mode !== 'crop');
+  if (mode === 'label') {
+    $('#tab-label').classList.add('active');
+    $('#view-crop').hidden = false;
+    $('#view-overview').hidden = true;
+    $('#view-analytics').hidden = true;
+    $('#view-help').hidden = true;
+    
+    if ($('#filter-status')) {
+      $('#filter-status').value = 'poor_outline';
+      applyFilters();
+    }
+    setStomaTool('edit');
+    if ($('#labeling-banner')) $('#labeling-banner').hidden = false;
+    return;
+  }
+  
+  if ($('#labeling-banner')) $('#labeling-banner').hidden = true;
+  
+  if (mode === 'crop') {
+    $('#tab-crop').classList.add('active');
+    $('#view-crop').hidden = false;
+    $('#view-overview').hidden = true;
+    $('#view-analytics').hidden = true;
+    $('#view-help').hidden = true;
+    
+    if ($('#filter-status') && $('#filter-status').value === 'poor_outline') {
+      $('#filter-status').value = 'all';
+      applyFilters();
+    }
+    return;
+  }
+  
+  const tabBtn = $('#tab-' + mode);
+  if (tabBtn) tabBtn.classList.add('active');
+  
+  $('#view-crop').hidden = true;
   $('#view-overview').hidden = (mode !== 'overview');
   $('#view-analytics').hidden = (mode !== 'analytics');
   $('#view-help').hidden = (mode !== 'help');

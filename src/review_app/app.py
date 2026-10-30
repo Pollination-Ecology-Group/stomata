@@ -29,7 +29,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from flask import Flask, Response, jsonify, request, send_from_directory, abort, g
 
-HERE = Path(__file__).resolve().parent
+HERE = Path("/app") if Path("/app/index.html").exists() else Path(__file__).parent
 BUCKET = os.environ.get("S3_BUCKET", "peg-bucket")
 PREFIX = os.environ.get("REVIEW_PREFIX", "Ostatni/Stomata/Review").rstrip("/")
 S3_ENDPOINT = os.environ.get("S3_ENDPOINT", "https://s3.cl4.du.cesnet.cz")
