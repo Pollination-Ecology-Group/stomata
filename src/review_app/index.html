@@ -784,6 +784,91 @@ th.num { text-align: right; }
   z-index: 100;
 }
 .toast.show { opacity: 1; }
+
+/* Bilingual guide styles */
+[data-lang="cs"] .lang-en { display: none !important; }
+[data-lang="en"] .lang-cs { display: none !important; }
+.langsw {
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.06);
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.langsw button {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.langsw button.on {
+  background: var(--accent, #2563eb);
+  color: #fff;
+}
+.help-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.help-top h2 { margin: 0; font-size: 20px; font-weight: 700; color: #fff; }
+
+/* Recent Review Grid & Thumbnails */
+.recent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.recent-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  background: #0b0f19;
+  transition: transform 0.1s, border-color 0.1s;
+}
+.recent-card:hover {
+  transform: translateY(-1px);
+  border-color: #60a5fa;
+}
+.recent-card.on {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+.recent-card.high_precision   { border-color: #22c55e; }
+.recent-card.minor_error      { border-color: #eab308; }
+.recent-card.poor_measurement { border-color: #f97316; }
+.recent-card.false_stoma      { border-color: #ef4444; }
+.recent-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.recent-card .cap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.85);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #e2e8f0;
+}
+
 </style>
 </head>
 <body>
@@ -997,6 +1082,16 @@ th.num { text-align: right; }
           </button>
         </div>
       </div>
+
+      <!-- Recently Reviewed Card -->
+      <div class="card" id="recent-card" style="margin-top:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <h3 style="margin:0;">Recently Reviewed (<span id="recent-count">0</span>)</h3>
+          <button id="btn-return-to" onclick="returnToWorkTile()" style="display:none;font-size:11px;padding:3px 8px;background:var(--accent,#2563eb);color:#fff;border:none;border-radius:4px;cursor:pointer;">↩ Back to current</button>
+        </div>
+        <div id="recent-grid" class="recent-grid"></div>
+        <button id="recent-more-btn" onclick="toggleRecentMore()" style="display:none;width:100%;margin-top:8px;font-size:11px;padding:4px;background:transparent;border:1px dashed var(--border);color:var(--muted);border-radius:4px;cursor:pointer;">Show more</button>
+      </div>
     </aside>
   </section>
 
@@ -1087,46 +1182,186 @@ th.num { text-align: right; }
   </section>
 
   <!-- View 4: Guide & Help -->
-  <section id="view-help" hidden>
-    <h2>🌿 Reviewer Guide &amp; Digital Calipers</h2>
-    <p style="color:var(--muted)">How to inspect and verify stomata measurements to benchmark precision for ploidy sizing.</p>
+  <section id="view-help" data-lang="en" hidden>
+    <div class="help-top">
+      <h2>
+        <span class="lang-en">🌿 Stomata Morphometrics &amp; Precision Verification Guide</span>
+        <span class="lang-cs">🌿 Návod pro hodnocení morfometrie a přesnosti průduchů</span>
+      </h2>
+      <div class="langsw" role="group" aria-label="Language">
+        <button type="button" data-lang="cs" onclick="setHelpLang('cs')">🇨🇿 CZ</button>
+        <button type="button" data-lang="en" onclick="setHelpLang('en')">🇬🇧 EN</button>
+      </div>
+    </div>
+    <p style="color:var(--muted);margin-bottom:18px;">
+      <span class="lang-en">How to inspect stoma segmentation, measure ground-truth with digital calipers, and evaluate precision for ploidy discrimination (2x vs 4x) and stomatal density.</span>
+      <span class="lang-cs">Jak kontrolovat segmentaci průduchů, měřit referenční rozměry virtuálním měřítkem a posuzovat přesnost pro určení ploidie (2x vs 4x) a stomatální hustoty.</span>
+    </p>
 
     <div class="help-section">
-      <h3>1. Anatomical Measurement Dimensions</h3>
+      <h3>
+        <span class="lang-en">1. Anatomical Measurement Dimensions</span>
+        <span class="lang-cs">1. Anatomické rozměry průduchu</span>
+      </h3>
       <div class="help-grid">
         <div class="card">
-          <strong style="color:var(--maj-yellow)">📏 Major Axis (Full Stoma Length)</strong>
-          <p style="font-size:12.5px;color:var(--muted)">Spans between the two guard cell junctions (poles). Key trait for ploidy level discrimination (diploids 2x vs tetraploids 4x).</p>
+          <strong style="color:var(--maj-yellow)">📏 <span class="lang-en">Major Axis (Full Stoma Length)</span><span class="lang-cs">Delší osa (Celková délka průduchu)</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Spans between the two guard cell junctions (poles). Key diagnostic trait for ploidy level discrimination (diploids 2x vs tetraploids 4x).</span>
+            <span class="lang-cs">Vzdálenost mezi póly svěracích buněk. Klíčový znak pro rozlišení ploidní úrovně (diploidi 2x vs. tetraploidi 4x).</span>
+          </p>
         </div>
         <div class="card">
-          <strong style="color:var(--min-orange)">📏 Minor Axis (Full Stoma Width)</strong>
-          <p style="font-size:12.5px;color:var(--muted)">Cross-sectional diameter perpendicular to the major axis at the centroid. Includes both guard cells and the pore.</p>
+          <strong style="color:var(--min-orange)">📏 <span class="lang-en">Minor Axis (Full Stoma Width)</span><span class="lang-cs">Kratší osa (Celková šířka průduchu)</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Cross-sectional diameter perpendicular to the major axis at the centroid. Includes both guard cells and the central aperture.</span>
+            <span class="lang-cs">Příčný průměr kolmý na delší osu v těžišti. Zahrnuje obě svěrací buňky i průduchovou štěrbinu.</span>
+          </p>
         </div>
         <div class="card">
-          <strong style="color:var(--pore-cyan)">🔵 Central Pore Aperture Width</strong>
-          <p style="font-size:12.5px;color:var(--muted)">Inner central opening diameter measured along the minor axis. Critical proxy for stomatal conductance ($g_{\text{smax}}$).</p>
+          <strong style="color:var(--pore-cyan)">🔵 <span class="lang-en">Central Pore Aperture Width</span><span class="lang-cs">Šířka průduchové štěrbiny</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Inner central opening diameter measured along the minor axis. Critical proxy for stomatal conductance (g_smax).</span>
+            <span class="lang-cs">Vnitřní šířka štěrbiny měřená podél kratší osy. Zásadní ukazatel pro stomatální vodivost (g_smax).</span>
+          </p>
         </div>
         <div class="card">
-          <strong style="color:var(--gc-magenta)">🟢 Guard Cell Width</strong>
-          <p style="font-size:12.5px;color:var(--muted)">Radial thickness of one guard cell: $\frac{L_{\text{minor}} - P_{\text{width}}}{2}$. Turgor regulation trait.</p>
+          <strong style="color:var(--gc-magenta)">🟢 <span class="lang-en">Guard Cell Width</span><span class="lang-cs">Šířka svěrací buňky</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Radial thickness of one guard cell: (Minor - Pore) / 2. Morphometric trait reflecting cell turgor and wall thickness.</span>
+            <span class="lang-cs">Radiální tloušťka jedné svěrací buňky: (Kratší osa - Štěrbina) / 2. Znak odrážející turgor a tloušťku buněčné stěny.</span>
+          </p>
         </div>
       </div>
     </div>
 
     <div class="help-section">
-      <h3>2. Keyboard Shortcuts</h3>
+      <h3>
+        <span class="lang-en">2. Precision Verdicts &amp; Criteria</span>
+        <span class="lang-cs">2. Hodnocení přesnosti a kritéria</span>
+      </h3>
+      <div class="help-grid">
+        <div class="card" style="border-left:3px solid #22c55e;">
+          <strong style="color:#22c55e;"><kbd>1</kbd> <span class="lang-en">High Precision (Ploidy Sizing)</span><span class="lang-cs">Vysoká přesnost (Určení ploidie)</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Poles accurately aligned, guard cell junctions crisp, pore properly segmented. Measurements are reliable for 2x vs 4x ploidy classification.</span>
+            <span class="lang-cs">Póly přesně zarovnané, spojení svěracích buněk čisté, štěrbina správně vymezena. Rozměry jsou spolehlivé pro rozlišení ploidie 2x vs. 4x.</span>
+          </p>
+        </div>
+        <div class="card" style="border-left:3px solid #eab308;">
+          <strong style="color:#eab308;"><kbd>2</kbd> <span class="lang-en">Minor Deviation (Density Only)</span><span class="lang-cs">Drobná odchylka (Pouze hustota)</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Stoma is genuine and located properly, but axis or pore boundary has slight noise. Suitable for stomatal density, but excluded from ploidy sizing.</span>
+            <span class="lang-cs">Průduch je skutečný a správně nalezený, ale osa nebo štěrbina má mírnou nepřesnost. Vhodné pro hustotu průduchů, ale nevhodné pro ploidii.</span>
+          </p>
+        </div>
+        <div class="card" style="border-left:3px solid #f97316;">
+          <strong style="color:#f97316;"><kbd>3</kbd> <span class="lang-en">Poor Outline (Failed Measurement)</span><span class="lang-cs">Špatný obrys (Chybné měření)</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Pore missed, polygon drifted onto epidermal cell walls, or major axis rotated away from poles. Unusable morphometrics.</span>
+            <span class="lang-cs">Štěrbina chybí, polygon přetekl do okolních buněk pokožky nebo je osa otočená mimo póly. Nepoužitelné hodnoty.</span>
+          </p>
+        </div>
+        <div class="card" style="border-left:3px solid #ef4444;">
+          <strong style="color:#ef4444;"><kbd>4</kbd> <span class="lang-en">False Stoma (Debris / Non-stoma)</span><span class="lang-cs">Falešný průduch (Nečistota / artefakt)</span></strong>
+          <p style="font-size:12.5px;color:var(--muted)">
+            <span class="lang-en">Artifact, stain precipitate, air bubble, or junction of pavement cells falsely detected as a stoma. Excluded from all analyses.</span>
+            <span class="lang-cs">Artefakt, sraženina barviva, vzduchová bublina nebo spojení pokožkových buněk chybně detekované jako průduch. Vyloučeno ze všech analýz.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3>
+        <span class="lang-en">3. Digital Caliper &amp; Ground Truth Benchmarking</span>
+        <span class="lang-cs">3. Digitální měřítko a referenční měření</span>
+      </h3>
       <div class="card">
-        <table style="font-size:13px;">
-          <tr><td><kbd>1</kbd></td><td>High Precision (Suitable for ploidy sizing)</td></tr>
-          <tr><td><kbd>2</kbd></td><td>Minor Deviation (Acceptable for density)</td></tr>
-          <tr><td><kbd>3</kbd></td><td>Poor Measurement (Bad outline/pore missed)</td></tr>
-          <tr><td><kbd>4</kbd></td><td>False Stoma (Debris / non-stoma)</td></tr>
-          <tr><td><kbd>Enter</kbd></td><td>Save decision and advance to next stoma</td></tr>
-          <tr><td><kbd>C</kbd></td><td>Toggle Digital Caliper mode</td></tr>
-          <tr><td><kbd>X</kbd></td><td>Toggle CLAHE contrast filter</td></tr>
-          <tr><td><kbd>Space</kbd></td><td>Hold to peek at raw micrograph (hides overlays)</td></tr>
-          <tr><td><kbd>R</kbd></td><td>Toggle Roboflow Relabeling flag for current crop</td></tr>
-          <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Navigate previous / next stoma</td></tr>
+        <ul style="font-size:13px;line-height:1.6;margin:0;padding-left:18px;">
+          <li>
+            <span class="lang-en"><b>Activation (<kbd>C</kbd>):</b> Click <b>Digital Caliper</b> or press <kbd>C</kbd>. The cursor turns to a crosshair.</span>
+            <span class="lang-cs"><b>Aktivace (<kbd>C</kbd>):</b> Klikni na <b>Digital Caliper</b> nebo stiskni <kbd>C</kbd>. Kurzor se změní na křížek.</span>
+          </li>
+          <li>
+            <span class="lang-en"><b>Drawing:</b> Either <b>drag</b> from start to end, or <b>click once</b> at the start pole and <b>click again</b> at the end pole. Press <kbd>Esc</kbd> to cancel.</span>
+            <span class="lang-cs"><b>Kreslení:</b> Buď <b>táhni myší</b> od začátku do konce, nebo <b>klikni jednou</b> na začátku a <b>druhým klikem</b> měření dokonči. Zrušit lze klávesou <kbd>Esc</kbd>.</span>
+          </li>
+          <li>
+            <span class="lang-en"><b>Benchmarking:</b> In the HUD, click <b>Set Major</b>, <b>Set Minor</b>, or <b>Set Pore</b> to record human ground-truth dimension alongside the model's estimate in <code>precision.csv</code>.</span>
+            <span class="lang-cs"><b>Uložení rozměru:</b> V plovoucím panelu klikni na <b>Set Major</b>, <b>Set Minor</b> nebo <b>Set Pore</b> pro záznam ručního rozměru do <code>precision.csv</code> pro porovnání s modelem.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3>
+        <span class="lang-en">4. Zoom, Pan &amp; Image Inspection</span>
+        <span class="lang-cs">4. Zoom, posun a kontrola snímku</span>
+      </h3>
+      <div class="card">
+        <ul style="font-size:13px;line-height:1.6;margin:0;padding-left:18px;">
+          <li>
+            <span class="lang-en"><b>Mouse wheel:</b> Zooms towards the cursor (0.6× – 8.0×). Keyboard <kbd>+</kbd> / <kbd>−</kbd> zoom in/out, <kbd>0</kbd> resets zoom and pan to 1.0×.</span>
+            <span class="lang-cs"><b>Kolečko myši:</b> Přibližuje ke kurzoru (0,6× – 8,0×). Klávesy <kbd>+</kbd> / <kbd>−</kbd> přibližují/oddalují, <kbd>0</kbd> resetuje zobrazení na 1,0×.</span>
+          </li>
+          <li>
+            <span class="lang-en"><b>Pan:</b> Middle mouse button drag always pans the view (even while in caliper mode). Left button drag pans in normal view.</span>
+            <span class="lang-cs"><b>Posun:</b> Tažení prostředním tlačítkem myši posouvá pohled kdykoliv (i v režimu měřítka). Levé tlačítko posouvá v běžném režimu.</span>
+          </li>
+          <li>
+            <span class="lang-en"><b>Hold <kbd>Space</kbd>:</b> Temporarily hides all vector overlays (polygons, axes, companion ticks) to inspect the raw epidermal peel.</span>
+            <span class="lang-cs"><b>Podržet <kbd>Mezerník</kbd>:</b> Dočasně skryje všechny překryvné vrstvy (polygony, osy, sousední průduchy) pro kontrolu surového snímku.</span>
+          </li>
+          <li>
+            <span class="lang-en"><b>Contrast (<kbd>X</kbd>):</b> Enhances local contrast on faint epidermal preparations.</span>
+            <span class="lang-cs"><b>Kontrast (<kbd>X</kbd>):</b> Zvýrazní lokální kontrast u málo kontrastních preparátů.</span>
+          </li>
+          <li>
+            <span class="lang-en"><b>Roboflow Flag (<kbd>R</kbd>):</b> Flags crop or full slide for inclusion into the active learning retraining queue.</span>
+            <span class="lang-cs"><b>Roboflow příznak (<kbd>R</kbd>):</b> Označí výřez nebo celé pole pro zařazení do trénovací sady aktivního učení.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3>
+        <span class="lang-en">5. Fixing Earlier Stomata</span>
+        <span class="lang-cs">5. Oprava starších průduchů</span>
+      </h3>
+      <div class="card">
+        <ul style="font-size:13px;line-height:1.6;margin:0;padding-left:18px;">
+          <li>
+            <span class="lang-en">The <b>Recently Reviewed</b> card in the right inspector displays thumbnails of your submitted decisions, border-colored by verdict.</span>
+            <span class="lang-cs">Karta <b>Recently Reviewed</b> v pravém panelu ukazuje náhledy odeslaných průduchů, orámované podle hodnocení.</span>
+          </li>
+          <li>
+            <span class="lang-en">Click any thumbnail to reopen and adjust verdict, flags or caliper. Pressing <kbd>Enter</kbd> saves and returns directly to the stoma you were working on (or use the <b>↩ Back</b> button).</span>
+            <span class="lang-cs">Kliknutím na náhled průduch znovu otevřeš a upravíš hodnocení nebo měřítko. Stisk <kbd>Enter</kbd> změny uloží a vrátí tě zpět na rozpracovaný průduch (nebo použij tlačítko <b>↩ Back</b>).</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <h3>
+        <span class="lang-en">6. Keyboard Shortcuts</span>
+        <span class="lang-cs">6. Přehled klávesových zkratek</span>
+      </h3>
+      <div class="card">
+        <table style="font-size:13px;width:100%;">
+          <tr><td style="width:130px;"><kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd> / <kbd>4</kbd></td><td><span class="lang-en">Set verdict (High Precision / Minor / Poor / False)</span><span class="lang-cs">Nastavit hodnocení (Vysoká přesnost / Drobné / Špatné / Falešný)</span></td></tr>
+          <tr><td><kbd>Enter</kbd></td><td><span class="lang-en">Save decision and advance (or return to work item)</span><span class="lang-cs">Uložit rozhodnutí a přejít dál (či zpět k práci)</span></td></tr>
+          <tr><td><kbd>C</kbd></td><td><span class="lang-en">Toggle Digital Caliper mode (click-click or drag)</span><span class="lang-cs">Zapnout/vypnout digitální měřítko (click-click nebo tažení)</span></td></tr>
+          <tr><td><kbd>X</kbd></td><td><span class="lang-en">Toggle CLAHE contrast filter</span><span class="lang-cs">Přepnout kontrastní filtr CLAHE</span></td></tr>
+          <tr><td><kbd>Space</kbd></td><td><span class="lang-en">Hold to peek at raw micrograph</span><span class="lang-cs">Držet pro náhled surového mikrosnímku</span></td></tr>
+          <tr><td><kbd>R</kbd></td><td><span class="lang-en">Toggle Roboflow Relabeling flag</span><span class="lang-cs">Označit pro Roboflow přeanotování</span></td></tr>
+          <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td><span class="lang-en">Navigate previous / next stoma</span><span class="lang-cs">Předchozí / další průduch</span></td></tr>
+          <tr><td><kbd>+</kbd> / <kbd>−</kbd> / <kbd>0</kbd></td><td><span class="lang-en">Zoom in / Zoom out / Reset zoom (1.0×)</span><span class="lang-cs">Přiblížit / Oddálit / Resetovat zoom (1,0×)</span></td></tr>
+          <tr><td><kbd>?</kbd></td><td><span class="lang-en">Toggle this Guide</span><span class="lang-cs">Otevřít / zavřít tento návod</span></td></tr>
+          <tr><td><kbd>Esc</kbd></td><td><span class="lang-en">Close guide / Cancel caliper drawing</span><span class="lang-cs">Zavřít návod / Zrušit rozkreslené měřítko</span></td></tr>
         </table>
       </div>
     </div>
@@ -1154,6 +1389,7 @@ const S = {
   caliperMode: false,
   caliperStart: null,
   caliperEnd: null,
+  caliperPending: false,
   isDrawingCaliper: false,
   zoom: 1.5,
   panX: 0,
@@ -1176,6 +1412,10 @@ function toast(msg) {
   clearTimeout(el._t);
   el._t = setTimeout(() => el.classList.remove('show'), 1800);
 }
+
+let returnTo = null;
+let recentLimit = 6;
+let downPos = null;
 
 function getReviewer() {
   return S.currentUser || 'jakub';
@@ -1202,6 +1442,14 @@ async function init() {
     $('#prog-txt').textContent = `${doneCount} / ${totalCount}`;
     $('#prog-bar').style.width = `${Math.round((doneCount / totalCount) * 100)}%`;
     refreshProgress();
+    renderRecent();
+    setHelpLang((() => {
+      try {
+        const v = localStorage.getItem('stomataHelpLang');
+        if (v) return v;
+      } catch(e) {}
+      return (navigator.language || '').toLowerCase().startsWith('cs') ? 'cs' : 'en';
+    })());
     
     const urlParams = new URLSearchParams(window.location.search);
     const itemParam = urlParams.get('item') || urlParams.get('crop');
@@ -1260,8 +1508,8 @@ function updateQueue() {
 }
 
 function loadItem(idx) {
-  if (idx < 0 || idx >= S.filtered.length) return;
-  if (S.dirty && !confirm('Discard unsaved review changes?')) return;
+  if (idx < 0 || idx >= S.filtered.length) return false;
+  if (S.dirty && !confirm('Discard unsaved review changes?')) return false;
   
   S.idx = idx;
   S.cur = S.filtered[idx];
@@ -1269,6 +1517,8 @@ function loadItem(idx) {
   S.t0 = Date.now();
   S.caliperStart = null;
   S.caliperEnd = null;
+  S.caliperPending = false;
+  S.isDrawingCaliper = false;
   $('#caliper-hud').hidden = true;
   
   // Clear previous image immediately so old image is never stuck during loading!
@@ -1340,6 +1590,8 @@ function loadItem(idx) {
     }
   };
   img.src = S.cur.img_url || S.cur.crop_url;
+  renderRecent();
+  return true;
 }
 
 async function toggleRelabelCurrent() {
@@ -1507,7 +1759,14 @@ async function saveDecision() {
       toast('Decision saved ✓');
       updateQueue();
       refreshProgress();
-      nav(1);
+      if (returnTo !== null) {
+        const target = returnTo;
+        returnTo = null;
+        loadItemById(target);
+      } else {
+        nav(1);
+      }
+      renderRecent();
     }
   } catch (err) {
     console.error('Save failed:', err);
@@ -1740,12 +1999,73 @@ function screenToCrop(clientX, clientY) {
   return {x: cropX, y: cropY};
 }
 
+function cancelCaliper() {
+  S.caliperPending = false;
+  S.isDrawingCaliper = false;
+  S.caliperStart = null;
+  S.caliperEnd = null;
+  $('#caliper-hud').hidden = true;
+  draw();
+}
+
+function zoomBy(factor) {
+  const cv = $('#cv');
+  const W = cv.width;
+  const H = cv.height;
+  const oldZoom = S.zoom;
+  const newZoom = Math.min(8.0, Math.max(0.6, oldZoom * factor));
+  if (newZoom === oldZoom) return;
+  S.panX = S.panX * (newZoom / oldZoom);
+  S.panY = S.panY * (newZoom / oldZoom);
+  S.zoom = newZoom;
+  draw();
+}
+
+function resetZoom() {
+  const cv = $('#cv');
+  if (S.img) {
+    const fitZoom = Math.min((cv.width * 0.88) / S.img.naturalWidth, (cv.height * 0.88) / S.img.naturalHeight);
+    S.zoom = Math.max(1.0, fitZoom);
+  } else {
+    S.zoom = 1.0;
+  }
+  S.panX = 0;
+  S.panY = 0;
+  draw();
+}
+
 cvWrap.addEventListener('mousedown', e => {
+  if (e.button === 1) { // Middle mouse always pans!
+    S.isPanning = true;
+    S.panStart = { x: e.clientX - S.panX, y: e.clientY - S.panY };
+    cvWrap.classList.add('panning');
+    e.preventDefault();
+    return;
+  }
+  if (e.button === 2) {
+    if (S.caliperPending) {
+      cancelCaliper();
+      e.preventDefault();
+    }
+    return;
+  }
+  if (e.button !== 0) return;
+
   if (S.caliperMode) {
-    S.isDrawingCaliper = true;
-    S.caliperStart = screenToCrop(e.clientX, e.clientY);
-    S.caliperEnd = S.caliperStart;
-    draw();
+    if (S.caliperPending) {
+      // Second click in click-click mode
+      S.caliperEnd = screenToCrop(e.clientX, e.clientY);
+      S.caliperPending = false;
+      S.isDrawingCaliper = false;
+      updateCaliperHud();
+      draw();
+    } else {
+      downPos = { x: e.clientX, y: e.clientY };
+      S.isDrawingCaliper = true;
+      S.caliperStart = screenToCrop(e.clientX, e.clientY);
+      S.caliperEnd = S.caliperStart;
+      draw();
+    }
   } else {
     S.isPanning = true;
     S.panStart = { x: e.clientX - S.panX, y: e.clientY - S.panY };
@@ -1765,10 +2085,18 @@ window.addEventListener('mousemove', e => {
   }
 });
 
-window.addEventListener('mouseup', () => {
-  if (S.isDrawingCaliper) {
-    S.isDrawingCaliper = false;
-    updateCaliperHud();
+window.addEventListener('mouseup', e => {
+  if (S.isDrawingCaliper && !S.caliperPending) {
+    const movedDist = downPos ? Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) : 0;
+    if (movedDist < 5) {
+      // Clicked without dragging: keep active for second click
+      S.caliperPending = true;
+    } else {
+      // Dragged and released
+      S.isDrawingCaliper = false;
+      S.caliperPending = false;
+      updateCaliperHud();
+    }
   }
   if (S.isPanning) {
     S.isPanning = false;
@@ -1778,8 +2106,23 @@ window.addEventListener('mouseup', () => {
 
 cvWrap.addEventListener('wheel', e => {
   e.preventDefault();
+  const rect = cv.getBoundingClientRect();
+  const screenX = e.clientX - rect.left;
+  const screenY = e.clientY - rect.top;
+  const W = cv.width;
+  const H = cv.height;
+  const img = S.img;
+  if (!img) return;
+
+  const oldZoom = S.zoom;
   const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
-  S.zoom = Math.min(8.0, Math.max(0.6, S.zoom * zoomFactor));
+  const newZoom = Math.min(8.0, Math.max(0.6, oldZoom * zoomFactor));
+  if (newZoom === oldZoom) return;
+
+  // Keep crop point under cursor fixed
+  S.panX = screenX - W / 2 - (screenX - W / 2 - S.panX) * (newZoom / oldZoom);
+  S.panY = screenY - H / 2 - (screenY - H / 2 - S.panY) * (newZoom / oldZoom);
+  S.zoom = newZoom;
   draw();
 }, { passive: false });
 
@@ -1788,10 +2131,7 @@ function toggleCaliper() {
   $('#btn-caliper').classList.toggle('active', S.caliperMode);
   cvWrap.classList.toggle('caliper-mode', S.caliperMode);
   if (!S.caliperMode) {
-    $('#caliper-hud').hidden = true;
-    S.caliperStart = null;
-    S.caliperEnd = null;
-    draw();
+    cancelCaliper();
   }
 }
 
@@ -1827,11 +2167,8 @@ function applyCaliperTo(traitKey) {
 }
 
 function resetCaliper() {
-  S.caliperStart = null;
-  S.caliperEnd = null;
   S.curCaliper = null;
-  $('#caliper-hud').hidden = true;
-  draw();
+  cancelCaliper();
 }
 
 function round2(v) { return Math.round(v * 100) / 100; }
@@ -1850,6 +2187,20 @@ window.addEventListener('keydown', e => {
   else if (e.key.toLowerCase() === 'c') { toggleCaliper(); }
   else if (e.key.toLowerCase() === 'x') { toggleClahe(); }
   else if (e.key.toLowerCase() === 'r') { toggleRelabelCurrent(); }
+  else if (e.key === '+' || e.key === '=') { zoomBy(1.2); }
+  else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.2); }
+  else if (e.key === '0') { resetZoom(); }
+  else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+    const isHelp = !$('#view-help').hidden;
+    switchView(isHelp ? 'crop' : 'help');
+  }
+  else if (e.key === 'Escape') {
+    if (!$('#view-help').hidden) {
+      switchView('crop');
+    } else if (S.caliperPending || S.isDrawingCaliper) {
+      cancelCaliper();
+    }
+  }
   else if (e.code === 'Space') {
     e.preventDefault();
     if (!S.peekRaw) { S.peekRaw = true; draw(); }
@@ -1982,6 +2333,108 @@ async function refreshProgress() {
     $('#prog-bar').style.width = `${data.completion_pct}%`;
     $('#prog-txt').textContent = `${data.done_items} / ${data.total_items}`;
   } catch (err) {}
+}
+
+
+// ── Recently Reviewed & Navigation Helpers ─────────────────────────────────────
+function findItemIndexInFiltered(id) {
+  return S.filtered.findIndex(it => it.id === id);
+}
+
+function loadItemById(id) {
+  let idx = findItemIndexInFiltered(id);
+  if (idx === -1) {
+    $('#filter-cytotype').value = 'all';
+    $('#filter-suitability').value = 'all';
+    S.filtered = S.items.slice();
+    updateQueue();
+    idx = findItemIndexInFiltered(id);
+  }
+  if (idx !== -1) {
+    return loadItem(idx);
+  }
+  return false;
+}
+
+function openRecent(id) {
+  if (S.cur && S.cur.id === id) return;
+  const rev = getReviewer();
+  const isCurReviewed = S.cur && (S.decisions[S.cur.id] || {})[rev];
+  const back = returnTo !== null ? returnTo : (S.cur && !isCurReviewed ? S.cur.id : null);
+  if (loadItemById(id) === false) return;
+  returnTo = back;
+  renderRecent();
+  if (back) toast('Enter saves and returns to your stoma');
+}
+
+function returnToWorkTile() {
+  if (returnTo) {
+    const target = returnTo;
+    returnTo = null;
+    loadItemById(target);
+    renderRecent();
+  }
+}
+
+function toggleRecentMore() {
+  recentLimit = recentLimit === 6 ? 24 : 6;
+  const moreBtn = $('#recent-more-btn');
+  if (moreBtn) moreBtn.textContent = recentLimit === 6 ? 'Show more' : 'Show less';
+  renderRecent();
+}
+
+function renderRecent() {
+  const el = $('#recent-grid');
+  if (!el) return;
+  const rev = getReviewer();
+  const reviewed = [];
+  for (const it of S.items) {
+    const dec = (S.decisions[it.id] || {})[rev];
+    if (dec && dec.saved_at) {
+      reviewed.push({ it, dec });
+    }
+  }
+  reviewed.sort((a, b) => (b.dec.saved_at || '').localeCompare(a.dec.saved_at || ''));
+  
+  const countEl = $('#recent-count');
+  if (countEl) countEl.textContent = reviewed.length ? `${reviewed.length}` : '0';
+  
+  const VERD_LABEL = {
+    high_precision: 'High',
+    minor_error: 'Minor',
+    poor_measurement: 'Poor',
+    false_stoma: 'False'
+  };
+  
+  el.innerHTML = reviewed.slice(0, recentLimit).map(({ it, dec }) => {
+    const isCur = S.cur && S.cur.id === it.id;
+    const isRelabel = S.relabelSet && S.relabelSet.has(it.id);
+    const v = dec.verdict || 'high_precision';
+    return `<div class="recent-card ${v} ${isCur ? 'on' : ''}" onclick="openRecent('${it.id}')" title="${it.plant_ID || it.id} · ${VERD_LABEL[v] || v}${isRelabel ? ' · 🏷️ Roboflow' : ''}\nClick to reopen and adjust">` +
+      `<img loading="lazy" src="${it.img_url}" alt="">` +
+      `<div class="cap"><span>${(it.plant_ID || it.id).slice(-8)}</span><span>${VERD_LABEL[v] || ''}${isRelabel ? ' 🏷️' : ''}</span></div>` +
+      `</div>`;
+  }).join('') || '<span style="grid-column:1/-1;color:var(--muted);font-size:12px;padding:4px;">No reviews recorded yet.</span>';
+  
+  const moreBtn = $('#recent-more-btn');
+  if (moreBtn) moreBtn.style.display = reviewed.length > recentLimit ? 'block' : 'none';
+  
+  const returnBtn = $('#btn-return-to');
+  if (returnBtn) {
+    returnBtn.style.display = returnTo ? 'inline-block' : 'none';
+    if (returnTo) {
+      const targetIt = S.items.find(x => x.id === returnTo);
+      returnBtn.textContent = `↩ Back to ${targetIt ? (targetIt.plant_ID || 'current') : 'current'}`;
+    }
+  }
+}
+
+function setHelpLang(l) {
+  if (l !== 'cs' && l !== 'en') l = 'en';
+  const page = $('#view-help');
+  if (page) page.dataset.lang = l;
+  $$('.langsw button').forEach(b => b.classList.toggle('on', b.dataset.lang === l));
+  try { localStorage.setItem('stomataHelpLang', l); } catch(e) {}
 }
 
 window.addEventListener('load', init);
