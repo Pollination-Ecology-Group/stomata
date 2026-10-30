@@ -305,6 +305,7 @@ def api_decision():
         "precision_score": int(data.get("precision_score", 5)),
         "issues": list(data.get("issues", [])),
         "caliper": data.get("caliper", {}),
+        "edited_vectors": data.get("edited_vectors", {}),
         "comment": str(data.get("comment", "")).strip(),
         "seconds": float(data.get("seconds", 0.0)),
         "saved_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

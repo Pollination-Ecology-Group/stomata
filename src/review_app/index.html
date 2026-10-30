@@ -869,6 +869,47 @@ th.num { text-align: right; }
   color: #e2e8f0;
 }
 
+
+/* Labeling toolbar & buttons */
+.tool-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tool-btn, .cls-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-hover);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tool-btn:hover, .cls-btn:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+}
+.tool-btn.active, .cls-btn.active {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+.tool-btn kbd, .cls-btn kbd {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #e2e8f0;
+}
+
 </style>
 </head>
 <body>
@@ -950,6 +991,21 @@ th.num { text-align: right; }
           <label><input type="checkbox" id="chk-companion" checked onchange="draw()"> Companions</label>
           <label><input type="checkbox" id="chk-labels" checked onchange="draw()"> Dimensions</label>
         </div>
+      </div>
+
+      <!-- Interactive Labeling & Measurement Toolbar -->
+      <div class="stage-bar tool-bar" style="background:rgba(15,23,42,0.55);padding:6px 14px;border-top:1px solid var(--border);gap:8px;">
+        <button id="btn-tool-caliper" class="tool-btn" onclick="setStomaTool('caliper')" title="Virtual Caliper (C)">📏 Caliper <kbd>C</kbd></button>
+        <button id="btn-tool-edit" class="tool-btn active" onclick="setStomaTool('edit')" title="Select & edit polygon vertices (E)">🖱️ Edit Points <kbd>E</kbd></button>
+        <button id="btn-tool-draw" class="tool-btn" onclick="setStomaTool('draw')" title="Click-click draw new polygon (P)">✏️ Draw Polygon <kbd>P</kbd></button>
+        <button id="btn-tool-del" class="tool-btn" onclick="clearSelectedStomaLayer()" title="Delete active polygon (Del)">🗑️ Delete <kbd>Del</kbd></button>
+        <div style="height:18px;width:1px;background:var(--border);margin:0 4px;"></div>
+        <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;">Layer:</span>
+        <button id="btn-layer-stoma" class="cls-btn active" onclick="setStomaLayer('stoma')" style="color:#4ade80;">🟢 Stoma <kbd>1</kbd></button>
+        <button id="btn-layer-pore" class="cls-btn" onclick="setStomaLayer('pore')" style="color:#38bdf8;">🔵 Pore <kbd>2</kbd></button>
+        <button id="btn-layer-companion" class="cls-btn" onclick="setStomaLayer('companion')" style="color:#c084fc;">🟣 Companion <kbd>3</kbd></button>
+        <div class="spacer"></div>
+        <span id="stoma-tool-status" style="font-size:11.5px;color:var(--muted);">🖱️ Click stoma/pore to edit points · drag junction poles to refine morphometrics</span>
       </div>
 
       <div class="canvas-container" id="canvas-wrap">
@@ -1417,6 +1473,15 @@ let returnTo = null;
 let recentLimit = 6;
 let downPos = null;
 
+// Labeling state: edit points, draw polygon, caliper
+let stomaTool = 'edit'; // 'edit', 'draw', 'caliper'
+let stomaLayer = 'stoma'; // 'stoma', 'pore', 'companion'
+let stomaDrawPts = [];
+let mouseCropPt = null;
+let stomaHoverVertex = null; // { layer, vertexIdx }
+let stomaHoverEdge = null; // { layer, edgeIdx, pt: [x, y] }
+let stomaDragVertex = null; // { layer, vertexIdx }
+
 function getReviewer() {
   return S.currentUser || 'jakub';
 }
@@ -1555,9 +1620,16 @@ function loadItem(idx) {
   $('#val-ar').textContent = S.cur.aspect_ratio || '--';
   $('#val-aperture').textContent = S.cur.aperture_ratio || '--';
   
-  // Previous Decision
+  // Previous Decision & edited vectors
   const rev = getReviewer();
   const prev = (S.decisions[S.cur.id] || {})[rev];
+  if (prev && prev.edited_vectors) {
+    if (prev.edited_vectors.stoma_poly) S.cur.vectors.stoma_poly = prev.edited_vectors.stoma_poly;
+    if (prev.edited_vectors.pore_poly) S.cur.vectors.pore_poly = prev.edited_vectors.pore_poly;
+    if (prev.edited_vectors.companion_stomata) S.cur.vectors.companion_stomata = prev.edited_vectors.companion_stomata;
+    recomputeMorphometrics();
+  }
+  stomaDrawPts = []; mouseCropPt = null; stomaDragVertex = null; stomaHoverVertex = null; stomaHoverEdge = null;
   setVerdict(prev ? prev.verdict : null, false);
   $('#iss-axis').checked = prev?.issues?.includes('axis_misaligned') || false;
   $('#iss-pore').checked = prev?.issues?.includes('pore_inaccurate') || false;
@@ -1741,7 +1813,8 @@ async function saveDecision() {
     issues: issues,
     comment: $('#decision-comment').value.trim(),
     seconds: Math.round((Date.now() - S.t0) / 1000.0),
-    caliper: S.curCaliper || {}
+    caliper: S.curCaliper || {},
+    edited_vectors: S.cur.vectors || {}
   };
   
   try {
@@ -1775,6 +1848,226 @@ async function saveDecision() {
 }
 
 // ── Drawing Engine ─────────────────────────────────────────────────────────────
+
+// ── Stomata Polygon Labeling & Morphometric Engines ───────────────────────────
+function setStomaTool(t) {
+  stomaTool = t;
+  $('#btn-tool-caliper').classList.toggle('active', t === 'caliper');
+  $('#btn-tool-edit').classList.toggle('active', t === 'edit');
+  $('#btn-tool-draw').classList.toggle('active', t === 'draw');
+  
+  stomaDrawPts = [];
+  mouseCropPt = null;
+  stomaDragVertex = null;
+  S.caliperMode = (t === 'caliper');
+  $('#btn-caliper').classList.toggle('active', S.caliperMode);
+  cvWrap.classList.toggle('caliper-mode', S.caliperMode);
+  if (!S.caliperMode) cancelCaliper();
+
+  const statusEl = $('#stoma-tool-status');
+  if (t === 'draw') {
+    if (statusEl) statusEl.textContent = `✏️ Draw ${stomaLayer.toUpperCase()} polygon · click points · click green start point or ⏎ to close · Esc cancels`;
+    toast(`Draw mode for ${stomaLayer}: click points around outline`);
+  } else if (t === 'caliper') {
+    if (statusEl) statusEl.textContent = '📏 Virtual Caliper: Drag or click two points to measure';
+    toast('Caliper mode active');
+  } else {
+    if (statusEl) statusEl.textContent = '🖱️ Click stoma/pore to edit points · drag junction poles to refine morphometrics';
+  }
+  draw();
+}
+
+function setStomaLayer(layer) {
+  stomaLayer = layer;
+  $('#btn-layer-stoma').classList.toggle('active', layer === 'stoma');
+  $('#btn-layer-pore').classList.toggle('active', layer === 'pore');
+  $('#btn-layer-companion').classList.toggle('active', layer === 'companion');
+  const statusEl = $('#stoma-tool-status');
+  if (stomaTool === 'draw' && statusEl) {
+    statusEl.textContent = `✏️ Draw ${layer.toUpperCase()} polygon · click points · click green start point or ⏎ to close · Esc cancels`;
+  }
+  draw();
+  toast(`Active layer: ${layer}`);
+}
+
+function getActiveLayerPoly() {
+  if (!S.cur || !S.cur.vectors) return null;
+  const v = S.cur.vectors;
+  if (stomaLayer === 'stoma') return v.stoma_poly || null;
+  if (stomaLayer === 'pore') return v.pore_poly || null;
+  return null;
+}
+
+function setActiveLayerPoly(newPoly) {
+  if (!S.cur || !S.cur.vectors) return;
+  const v = S.cur.vectors;
+  if (stomaLayer === 'stoma') v.stoma_poly = newPoly;
+  else if (stomaLayer === 'pore') v.pore_poly = newPoly;
+  else if (stomaLayer === 'companion') {
+    v.companion_stomata = v.companion_stomata || [];
+    v.companion_stomata.push({ stoma_poly: newPoly, stoma_idx: v.companion_stomata.length + 1 });
+  }
+  recomputeMorphometrics();
+  S.dirty = true;
+  markDirty();
+}
+
+function clearSelectedStomaLayer() {
+  if (!S.cur || !S.cur.vectors) return;
+  const v = S.cur.vectors;
+  if (stomaLayer === 'stoma') {
+    v.stoma_poly = [];
+    toast('Cleared stoma polygon');
+  } else if (stomaLayer === 'pore') {
+    v.pore_poly = [];
+    toast('Cleared pore polygon');
+  } else if (stomaLayer === 'companion') {
+    v.companion_stomata = [];
+    toast('Cleared companion stomata');
+  }
+  recomputeMorphometrics();
+  S.dirty = true;
+  markDirty();
+  draw();
+}
+
+function recomputeMorphometrics() {
+  if (!S.cur || !S.cur.vectors) return;
+  const v = S.cur.vectors;
+  const poly = v.stoma_poly;
+  if (!poly || poly.length < 3) return;
+
+  // Find two furthest points on stoma_poly (the poles)
+  let maxD2 = 0, p1 = poly[0], p2 = poly[1];
+  for (let i = 0; i < poly.length; i++) {
+    for (let j = i + 1; j < poly.length; j++) {
+      const d2 = (poly[i][0] - poly[j][0]) ** 2 + (poly[i][1] - poly[j][1]) ** 2;
+      if (d2 > maxD2) {
+        maxD2 = d2;
+        p1 = poly[i];
+        p2 = poly[j];
+      }
+    }
+  }
+  const majPx = Math.sqrt(maxD2);
+  const majUm = round2(majPx * PX_TO_UM);
+  v.major_line = [p1, p2];
+  S.cur.major_axis_um = majUm;
+  $('#val-maj').textContent = `${majUm} µm`;
+
+  // Centroid
+  let cx = 0, cy = 0;
+  poly.forEach(([x, y]) => { cx += x; cy += y; });
+  cx /= poly.length; cy /= poly.length;
+
+  // Minor axis: perpendicular to (p2 - p1) through centroid
+  const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+
+  let minProj = Infinity, maxProj = -Infinity;
+  poly.forEach(([x, y]) => {
+    const proj = (x - cx) * nx + (y - cy) * ny;
+    if (proj < minProj) minProj = proj;
+    if (proj > maxProj) maxProj = proj;
+  });
+  const minPx = maxProj - minProj;
+  const minUm = round2(minPx * PX_TO_UM);
+  v.minor_line = [
+    [cx + minProj * nx, cy + minProj * ny],
+    [cx + maxProj * nx, cy + maxProj * ny]
+  ];
+  S.cur.minor_axis_um = minUm;
+  $('#val-min').textContent = `${minUm} µm`;
+
+  // Pore aperture
+  let poreUm = 0;
+  if (v.pore_poly && v.pore_poly.length >= 3) {
+    let pMinProj = Infinity, pMaxProj = -Infinity;
+    v.pore_poly.forEach(([x, y]) => {
+      const proj = (x - cx) * nx + (y - cy) * ny;
+      if (proj < pMinProj) pMinProj = proj;
+      if (proj > pMaxProj) pMaxProj = proj;
+    });
+    const porePx = Math.max(0, pMaxProj - pMinProj);
+    poreUm = round2(porePx * PX_TO_UM);
+  } else if (S.cur.pore_width_um) {
+    poreUm = S.cur.pore_width_um;
+  }
+  S.cur.pore_width_um = poreUm;
+  $('#val-pore').textContent = `${poreUm} µm`;
+
+  // Guard cell width: (minor - pore) / 2
+  const gcUm = round2(Math.max(0, (minUm - poreUm) / 2));
+  S.cur.guard_cell_width_um = gcUm;
+  $('#val-gc').textContent = `${gcUm} µm`;
+
+  // Ratios
+  const ar = minUm > 0 ? (majUm / minUm).toFixed(2) : '--';
+  const ap = minUm > 0 ? (poreUm / minUm).toFixed(2) : '--';
+  S.cur.aspect_ratio = ar;
+  S.cur.aperture_ratio = ap;
+  $('#val-ar').textContent = ar;
+  $('#val-aperture').textContent = ap;
+}
+
+function distToSegmentSquared2(p, v, w) {
+  const l2 = (v[0] - w[0]) ** 2 + (v[1] - w[1]) ** 2;
+  if (l2 === 0) return (p[0] - v[0]) ** 2 + (p[1] - v[1]) ** 2;
+  let t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return (p[0] - (v[0] + t * (w[0] - v[0]))) ** 2 + (p[1] - (v[1] + t * (w[1] - v[1]))) ** 2;
+}
+
+function closestPointOnSegment2(p, v, w) {
+  const l2 = (v[0] - w[0]) ** 2 + (v[1] - w[1]) ** 2;
+  if (l2 === 0) return [v[0], v[1]];
+  let t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return [Math.round(v[0] + t * (w[0] - v[0])), Math.round(v[1] + t * (w[1] - v[1]))];
+}
+
+function findStomaHoverVertex(cropX, cropY) {
+  const poly = getActiveLayerPoly();
+  if (!poly || poly.length < 3) return null;
+  const threshold = 10 / S.zoom;
+  for (let j = 0; j < poly.length; j++) {
+    if (Math.hypot(poly[j][0] - cropX, poly[j][1] - cropY) < threshold) {
+      return { layer: stomaLayer, vertexIdx: j };
+    }
+  }
+  return null;
+}
+
+function findStomaHoverEdge(cropX, cropY) {
+  const poly = getActiveLayerPoly();
+  if (!poly || poly.length < 3) return null;
+  const threshold = (10 / S.zoom) ** 2;
+  let best = null, minDist = threshold;
+  for (let j = 0; j < poly.length; j++) {
+    const k = (j + 1) % poly.length;
+    const d = distToSegmentSquared2([cropX, cropY], poly[j], poly[k]);
+    if (d < minDist) {
+      minDist = d;
+      best = { layer: stomaLayer, edgeIdx: j, pt: closestPointOnSegment2([cropX, cropY], poly[j], poly[k]) };
+    }
+  }
+  return best;
+}
+
+function finishStomaDraw() {
+  if (stomaDrawPts.length < 3) {
+    toast('⚠️ Need at least 3 points for a polygon');
+    return;
+  }
+  setActiveLayerPoly(stomaDrawPts.slice());
+  stomaDrawPts = [];
+  mouseCropPt = null;
+  setStomaTool('edit');
+  draw();
+  toast(`✓ Saved new ${stomaLayer} outline`);
+}
+
 function draw() {
   resizeCanvas();
   const cv = $('#cv');
@@ -1977,6 +2270,112 @@ function draw() {
       ctx.fill();
     });
   }
+
+  // Active layer polygon vertices & handles in edit mode
+  if (stomaTool === 'edit') {
+    const poly = getActiveLayerPoly();
+    if (poly && poly.length >= 3) {
+      poly.forEach(([x, y], j) => {
+        const isHov = stomaHoverVertex && stomaHoverVertex.vertexIdx === j;
+        ctx.beginPath();
+        ctx.arc(x, y, (isHov ? 7.5 : 4.5) / S.zoom, 0, Math.PI * 2);
+        ctx.fillStyle = isHov ? '#38bdf8' : '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = isHov ? '#ffffff' : '#0f172a';
+        ctx.lineWidth = (isHov ? 2.2 : 1.4) / S.zoom;
+        ctx.stroke();
+
+        if (isHov) {
+          ctx.beginPath();
+          ctx.arc(x, y, 11 / S.zoom, 0, Math.PI * 2);
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.5 / S.zoom;
+          ctx.setLineDash([3 / S.zoom, 2 / S.zoom]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      });
+
+      if (stomaHoverEdge) {
+        const [qx, qy] = stomaHoverEdge.pt;
+        ctx.beginPath();
+        ctx.arc(qx, qy, 6 / S.zoom, 0, Math.PI * 2);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.8 / S.zoom;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(qx - 3 / S.zoom, qy);
+        ctx.lineTo(qx + 3 / S.zoom, qy);
+        ctx.moveTo(qx, qy - 3 / S.zoom);
+        ctx.lineTo(qx, qy + 3 / S.zoom);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.4 / S.zoom;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Draw Mode preview (click-click polygon)
+  if (stomaTool === 'draw' && stomaDrawPts.length > 0) {
+    const isSnapping = mouseCropPt && stomaDrawPts.length >= 3 && Math.hypot(mouseCropPt.x - stomaDrawPts[0][0], mouseCropPt.y - stomaDrawPts[0][1]) < (14 / S.zoom);
+    ctx.beginPath();
+    stomaDrawPts.forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    if (mouseCropPt) {
+      if (isSnapping) ctx.lineTo(stomaDrawPts[0][0], stomaDrawPts[0][1]);
+      else ctx.lineTo(mouseCropPt.x, mouseCropPt.y);
+    }
+    ctx.strokeStyle = stomaLayer === 'pore' ? '#38bdf8' : '#22c55e';
+    ctx.lineWidth = 2.4 / S.zoom;
+    ctx.stroke();
+
+    if (isSnapping) {
+      ctx.fillStyle = stomaLayer === 'pore' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(34, 197, 94, 0.2)';
+      ctx.fill();
+    }
+
+    stomaDrawPts.forEach(([x, y], j) => {
+      ctx.beginPath();
+      if (j === 0) {
+        const r = (isSnapping ? 8.5 : 6) / S.zoom;
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981';
+        ctx.fill();
+        ctx.strokeStyle = isSnapping ? '#ffffff' : '#047857';
+        ctx.lineWidth = (isSnapping ? 2.5 : 1.5) / S.zoom;
+        ctx.stroke();
+
+        if (isSnapping) {
+          ctx.beginPath();
+          ctx.arc(x, y, 14 / S.zoom, 0, Math.PI * 2);
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2 / S.zoom;
+          ctx.setLineDash([3 / S.zoom, 3 / S.zoom]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      } else {
+        ctx.arc(x, y, 4 / S.zoom, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = stomaLayer === 'pore' ? '#38bdf8' : '#22c55e';
+        ctx.lineWidth = 1.5 / S.zoom;
+        ctx.stroke();
+      }
+    });
+
+    if (mouseCropPt && !isSnapping) {
+      ctx.beginPath();
+      ctx.arc(mouseCropPt.x, mouseCropPt.y, 4 / S.zoom, 0, Math.PI * 2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1 / S.zoom;
+      ctx.stroke();
+    }
+  }
   
   ctx.restore();
 }
@@ -2034,27 +2433,49 @@ function resetZoom() {
   draw();
 }
 
+cvWrap.addEventListener('contextmenu', e => {
+  if (stomaTool === 'draw' || stomaHoverVertex) e.preventDefault();
+});
+
 cvWrap.addEventListener('mousedown', e => {
-  if (e.button === 1) { // Middle mouse always pans!
+  if (e.button === 1 || e.altKey) {
     S.isPanning = true;
     S.panStart = { x: e.clientX - S.panX, y: e.clientY - S.panY };
     cvWrap.classList.add('panning');
     e.preventDefault();
     return;
   }
-  if (e.button === 2) {
-    if (S.caliperPending) {
-      cancelCaliper();
+
+  const cp = screenToCrop(e.clientX, e.clientY);
+
+  if (stomaTool === 'draw') {
+    if (e.button === 2) {
+      if (stomaDrawPts.length) {
+        stomaDrawPts.pop();
+        draw();
+      }
       e.preventDefault();
+      return;
+    }
+    if (e.button === 0) {
+      if (stomaDrawPts.length >= 3 && Math.hypot(cp.x - stomaDrawPts[0][0], cp.y - stomaDrawPts[0][1]) < (14 / S.zoom)) {
+        finishStomaDraw();
+        return;
+      }
+      stomaDrawPts.push([Math.round(cp.x), Math.round(cp.y)]);
+      draw();
     }
     return;
   }
-  if (e.button !== 0) return;
 
-  if (S.caliperMode) {
+  if (stomaTool === 'caliper') {
+    if (e.button === 2) {
+      if (S.caliperPending) { cancelCaliper(); e.preventDefault(); }
+      return;
+    }
+    if (e.button !== 0) return;
     if (S.caliperPending) {
-      // Second click in click-click mode
-      S.caliperEnd = screenToCrop(e.clientX, e.clientY);
+      S.caliperEnd = cp;
       S.caliperPending = false;
       S.isDrawingCaliper = false;
       updateCaliperHud();
@@ -2062,11 +2483,52 @@ cvWrap.addEventListener('mousedown', e => {
     } else {
       downPos = { x: e.clientX, y: e.clientY };
       S.isDrawingCaliper = true;
-      S.caliperStart = screenToCrop(e.clientX, e.clientY);
-      S.caliperEnd = S.caliperStart;
+      S.caliperStart = cp;
+      S.caliperEnd = cp;
       draw();
     }
-  } else {
+    return;
+  }
+
+  // Edit mode:
+  if (stomaHoverVertex) {
+    if (e.button === 2 || e.shiftKey) {
+      const poly = getActiveLayerPoly();
+      if (poly && poly.length > 3) {
+        poly.splice(stomaHoverVertex.vertexIdx, 1);
+        stomaHoverVertex = null;
+        recomputeMorphometrics();
+        S.dirty = true;
+        markDirty();
+        draw();
+        toast('Vertex removed');
+      } else {
+        toast('Polygon must have at least 3 points');
+      }
+      e.preventDefault();
+      return;
+    }
+    stomaDragVertex = { ...stomaHoverVertex };
+    return;
+  }
+
+  if (stomaHoverEdge) {
+    const poly = getActiveLayerPoly();
+    if (poly) {
+      poly.splice(stomaHoverEdge.edgeIdx + 1, 0, stomaHoverEdge.pt);
+      stomaHoverVertex = { layer: stomaLayer, vertexIdx: stomaHoverEdge.edgeIdx + 1 };
+      stomaHoverEdge = null;
+      recomputeMorphometrics();
+      S.dirty = true;
+      markDirty();
+      draw();
+      toast('Vertex inserted on edge');
+    }
+    return;
+  }
+
+  // Normal Pan
+  if (e.button === 0) {
     S.isPanning = true;
     S.panStart = { x: e.clientX - S.panX, y: e.clientY - S.panY };
     cvWrap.classList.add('panning');
@@ -2074,25 +2536,65 @@ cvWrap.addEventListener('mousedown', e => {
 });
 
 window.addEventListener('mousemove', e => {
-  if (S.isDrawingCaliper) {
-    S.caliperEnd = screenToCrop(e.clientX, e.clientY);
-    updateCaliperHud();
+  const cp = screenToCrop(e.clientX, e.clientY);
+
+  if (stomaTool === 'draw') {
+    mouseCropPt = cp;
     draw();
-  } else if (S.isPanning) {
+    return;
+  }
+
+  if (stomaTool === 'caliper') {
+    if (S.isDrawingCaliper) {
+      S.caliperEnd = cp;
+      updateCaliperHud();
+      draw();
+    } else if (S.isPanning) {
+      S.panX = e.clientX - S.panStart.x;
+      S.panY = e.clientY - S.panStart.y;
+      draw();
+    }
+    return;
+  }
+
+  if (stomaDragVertex) {
+    const poly = getActiveLayerPoly();
+    if (poly && poly[stomaDragVertex.vertexIdx]) {
+      poly[stomaDragVertex.vertexIdx] = [Math.round(cp.x), Math.round(cp.y)];
+      recomputeMorphometrics();
+      S.dirty = true;
+      markDirty();
+      draw();
+    }
+    return;
+  }
+
+  if (S.isPanning) {
     S.panX = e.clientX - S.panStart.x;
     S.panY = e.clientY - S.panStart.y;
     draw();
+    return;
+  }
+
+  if (stomaTool === 'edit') {
+    const prevHv = stomaHoverVertex, prevHe = stomaHoverEdge;
+    stomaHoverVertex = findStomaHoverVertex(cp.x, cp.y);
+    stomaHoverEdge = stomaHoverVertex ? null : findStomaHoverEdge(cp.x, cp.y);
+
+    if (stomaHoverVertex) cvWrap.style.cursor = 'grab';
+    else if (stomaHoverEdge) cvWrap.style.cursor = 'copy';
+    else cvWrap.style.cursor = 'default';
+
+    if (prevHv !== stomaHoverVertex || prevHe !== stomaHoverEdge) draw();
   }
 });
 
 window.addEventListener('mouseup', e => {
-  if (S.isDrawingCaliper && !S.caliperPending) {
+  if (stomaDragVertex) stomaDragVertex = null;
+  if (stomaTool === 'caliper' && S.isDrawingCaliper && !S.caliperPending) {
     const movedDist = downPos ? Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) : 0;
-    if (movedDist < 5) {
-      // Clicked without dragging: keep active for second click
-      S.caliperPending = true;
-    } else {
-      // Dragged and released
+    if (movedDist < 5) S.caliperPending = true;
+    else {
       S.isDrawingCaliper = false;
       S.caliperPending = false;
       updateCaliperHud();
@@ -2177,9 +2679,36 @@ function round2(v) { return Math.round(v * 100) / 100; }
 window.addEventListener('keydown', e => {
   if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) return;
   
-  if (e.key === '1') { setVerdict('high_precision'); }
-  else if (e.key === '2') { setVerdict('minor_error'); }
-  else if (e.key === '3') { setVerdict('poor_measurement'); }
+  if (stomaTool === 'draw') {
+    if (e.key === 'Enter') { finishStomaDraw(); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (stomaDrawPts.length) { stomaDrawPts.pop(); draw(); }
+      return;
+    }
+    if (e.key === 'Escape') { setStomaTool('edit'); return; }
+  }
+
+  if (e.key.toLowerCase() === 'e') { setStomaTool('edit'); return; }
+  if (e.key.toLowerCase() === 'p') { setStomaTool(stomaTool === 'draw' ? 'edit' : 'draw'); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (stomaHoverVertex) {
+      const poly = getActiveLayerPoly();
+      if (poly && poly.length > 3) {
+        poly.splice(stomaHoverVertex.vertexIdx, 1);
+        stomaHoverVertex = null;
+        recomputeMorphometrics();
+        S.dirty = true;
+        markDirty();
+        draw();
+        toast('Vertex removed');
+      }
+      return;
+    }
+  }
+
+  if (e.key === '1') { setStomaLayer('stoma'); setVerdict('high_precision'); }
+  else if (e.key === '2') { setStomaLayer('pore'); setVerdict('minor_error'); }
+  else if (e.key === '3') { setStomaLayer('companion'); setVerdict('poor_measurement'); }
   else if (e.key === '4') { setVerdict('false_stoma'); }
   else if (e.key === 'Enter') { saveDecision(); }
   else if (e.key === 'ArrowLeft') { nav(-1); }
