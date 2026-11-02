@@ -41,7 +41,7 @@ echo "📦 Updating ConfigMap stomata-review-src..."
 kubectl create configmap stomata-review-src -n "$NS" \
   --from-file=app.py=src/review_app/app.py \
   --from-file=index.html=src/review_app/index.html \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | kubectl replace -f -
 
 # 2. Apply deployment, service, and ingress
 echo "🚀 Applying Kubernetes manifests (deployment, service, ingress)..."

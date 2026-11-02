@@ -17,3 +17,6 @@ example_field.png
 **/*.quarto_ipynb
 .credentials
 *.zip
+*.bak
+*.pt
+src/review_app/data/

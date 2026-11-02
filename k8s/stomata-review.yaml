@@ -30,17 +30,23 @@ spec:
           type: RuntimeDefault
       containers:
       - name: app
-        image: python:3.12.7-slim
-        workingDir: /app
+        image: ultralytics/ultralytics:latest
+        imagePullPolicy: IfNotPresent
+        workingDir: /tmp
         command:
           - "sh"
           - "-c"
-          - "pip install --user --quiet --no-warn-script-location flask==3.0.3 boto3==1.35.36 waitress==3.0.0 numpy==2.1.2 && python -m waitress --port=8080 --threads=8 app:app"
+          - |
+            pip install --user --quiet --no-warn-script-location flask boto3 waitress || exit 1
+            python3 -c "import boto3, os, urllib3; urllib3.disable_warnings(); s3 = boto3.client('s3', endpoint_url=os.environ['S3_ENDPOINT'], aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'], aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'], verify=False); s3.download_file(os.environ['S3_BUCKET'], 'Ostatni/YOLO_flies/mobile_sam.pt', '/tmp/mobile_sam.pt')" || true
+            cd /app && exec python -m waitress --port=8080 --threads=8 app:app
         ports:
           - containerPort: 8080
         env:
           - name: HOME
             value: /tmp
+          - name: SAM_WEIGHTS
+            value: /tmp/mobile_sam.pt
           - name: S3_ENDPOINT
             value: "https://s3.cl4.du.cesnet.cz"
           - name: S3_BUCKET
@@ -66,7 +72,7 @@ spec:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 25
+          initialDelaySeconds: 20
           periodSeconds: 10
         securityContext:
           allowPrivilegeEscalation: false
@@ -74,11 +80,11 @@ spec:
             drop: ["ALL"]
         resources:
           requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: "500m"
+            cpu: 500m
             memory: 1Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
         volumeMounts:
         - name: app
           mountPath: /app
